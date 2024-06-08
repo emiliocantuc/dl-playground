@@ -1,0 +1,9 @@
+project:
+  title: "paper-reprod"
+  
+format:
+  html:
+    code-fold: true
+
+
+
