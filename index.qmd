@@ -1,0 +1,9 @@
+# Deep Learning Playground
+
+Learning and playing around with pytorch by doing textbook exercises, paper reproductions, etc.
+
+## Partial Paper Reproductions
+Where I attempt to reproduce part of papers I find interesting. Should not be taken as rigorous reproduction attempts.
+
+- [Deep Learning is Robust to Massive Label Noise]("/dl-massive-label-noise/playground.html")
+
