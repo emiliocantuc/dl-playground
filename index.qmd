@@ -10,5 +10,6 @@ Where I attempt to reproduce part of papers I find interesting. Should not be ta
 
 ## D2L Exercises
 Some exercises from the [Dive Into Deep Learning Book](https://www.d2l.ai)
+
 - [Section 7.6](/d2l-exercises/7-6.html)
 
