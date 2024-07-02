@@ -133,7 +133,7 @@ window.Quarto = {
 
 
 <p>Where I attempt to solve the exercises in <a href="https://d2l.ai/chapter_convolutional-modern/batch-norm.html">section 8.5 of the d2l book</a> from scratch in pytorch (without using the d2l library).</p>
-<div id="cell-2" class="cell" data-execution_count="1">
+<div id="cell-2" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Imports</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
@@ -152,10 +152,11 @@ window.Quarto = {
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os, itertools, time, random</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> <span class="st">'cpu'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os, itertools, time, random</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> <span class="st">'cpu'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="context" class="level2">
@@ -168,7 +169,7 @@ BN(x) = \gamma \odot \frac{x-\hat \mu_B}{\hat \sigma_B} + \beta
 <p>Where <span class="math inline">\(\gamma\)</span>, <span class="math inline">\(\beta\)</span> are learned and <span class="math inline">\(\mu_B\)</span>, <span class="math inline">\(\sigma_B\)</span> are estimated using the input’s minibatch <span class="math inline">\(B\)</span>.</p>
 <p>I.e. batch norm first normalizes the input to have mean <span class="math inline">\(0\)</span> and std <span class="math inline">\(1\)</span>, facilitating convergence during optimization.</p>
 <p>However, since BN is typically applied before activation (at least traditionally), doing so will reduce the expressive power of the layer. For instance, as pointed out by the <a href="https://arxiv.org/pdf/1502.03167">original paper</a>, “normalizing the inputs of a sigmoid would constrain them to the linear regime of the nonlinearity”. Below we plot a sigmoid and note that in the [-1, 1] range it is essentially linear.</p>
-<div id="cell-4" class="cell" data-execution_count="19">
+<div id="cell-4" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Plot sigmoid</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">3</span>))</span>
@@ -208,7 +209,7 @@ BN_{\gamma, \beta}(x + \alpha) =  BN_{\gamma, \beta'}(x)
 <p>In convolution layers we apply BN per channel, across all locations. I.e. <em>“each channel has its own scale and shift parameters, both of which are scalars”</em>. And since the convolution layer also outputs a scalar bias per channel, a similar argument applies.</p>
 <p>But should we remove the biases? Yes. We get the same expressive power with less params.</p>
 <p>Lets try it out empirically on MNIST by training the <code>BNLeNet</code> network defined in the section, removing bias on linear and convolution layers in turn. Although we’ll not get the same learned parameters (<span class="math inline">\(\beta \to \beta'\)</span>), we should get comparable performance.</p>
-<div id="cell-10" class="cell" data-execution_count="44">
+<div id="cell-10" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Model definition</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> init_cnn(module):</span>
@@ -234,7 +235,7 @@ BN_{\gamma, \beta}(x + \alpha) =  BN_{\gamma, \beta'}(x)
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.net(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="cell-11" class="cell" data-execution_count="42">
+<div id="cell-11" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Training function</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train(net, train_loader, test_loader, num_epochs <span class="op">=</span> <span class="dv">5</span>, lr <span class="op">=</span> <span class="fl">0.1</span>, verbose <span class="op">=</span> <span class="va">True</span>):</span>
@@ -264,7 +265,7 @@ BN_{\gamma, \beta}(x + \alpha) =  BN_{\gamma, \beta'}(x)
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> test_accs</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="cell-12" class="cell" data-execution_count="70">
+<div id="cell-12" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Train and evaluate</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set data loader seed for reproducibility</span></span>
@@ -277,19 +278,19 @@ BN_{\gamma, \beta}(x + \alpha) =  BN_{\gamma, \beta'}(x)
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> removed_bias <span class="kw">in</span> [<span class="st">'none'</span>, <span class="st">'linear'</span>, <span class="st">'conv'</span>]:</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    net <span class="op">=</span> BNLeNet(removed_bias <span class="op">=</span> removed_bias)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(<span class="dv">0</span>)<span class="op">;</span> np.random.seed(<span class="dv">0</span>)<span class="op">;</span> random.seed(<span class="dv">0</span>)</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> torch.Generator()</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    g.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(<span class="dv">0</span>)<span class="op">;</span> np.random.seed(<span class="dv">0</span>)<span class="op">;</span> random.seed(<span class="dv">0</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> torch.Generator()</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    g.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    net <span class="op">=</span> BNLeNet(removed_bias <span class="op">=</span> removed_bias)</span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    train_loader <span class="op">=</span> DataLoader(training_data, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">True</span>, worker_init_fn <span class="op">=</span> seed_worker, generator <span class="op">=</span> g)</span>
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    train(net, train_loader, test_loader, num_epochs <span class="op">=</span> <span class="dv">10</span>, lr <span class="op">=</span> <span class="fl">0.1</span>, verbose <span class="op">=</span> <span class="va">False</span>)</span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>removed_bias<span class="sc">}</span><span class="ss"> final test acc: </span><span class="ch">\t</span><span class="sc">{</span>eval_net(net, test_loader)<span class="sc">}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>none final test acc:    0.9816
-linear final test acc:  0.9863
-conv final test acc:    0.9781</code></pre>
+<pre><code>none final test acc:    0.9821
+linear final test acc:  0.9869
+conv final test acc:    0.9824</code></pre>
 </div>
 </div>
 <p>Close enough.</p>
@@ -339,8 +340,8 @@ conv final test acc:    0.9781</code></pre>
 <span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.net(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Let’s try the range <span class="math inline">\(lr \in \{1, 0.5, 0.1, 0.05\}\)</span>:</p>
-<div id="cell-18" class="cell" data-execution_count="70">
+<p>We found <span class="math inline">\(lr \in \{4, 2, 1, 0.5, 0.1, 0.05\}\)</span> to the extreme learning rates where LeNet still trains (in 10 epochs).</p>
+<div id="cell-18" class="cell" data-execution_count="109">
 <details class="code-fold">
 <summary>Plot results</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>), sharey <span class="op">=</span> <span class="va">True</span>)</span>
@@ -348,11 +349,12 @@ conv final test acc:    0.9781</code></pre>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, name, results <span class="kw">in</span> <span class="bu">zip</span>([ax1, ax2], [<span class="st">'Without BN'</span>, <span class="st">'With BN'</span>], [without_bn, with_bn]):</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> lr, accs <span class="kw">in</span> <span class="bu">zip</span>(lrs, results):</span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        ax.plot(accs, label<span class="op">=</span><span class="ss">f'lr=</span><span class="sc">{</span>lr<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        ax.legend()</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        ax.set_title(<span class="ss">f'</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        ax.set_xlabel(<span class="st">'Epoch'</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        ax.set_title(<span class="ss">f'</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        ax.set_xlabel(<span class="st">'Epoch'</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>ax1.set_ylabel(<span class="st">'Validation Accuracy'</span>)</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>ax2.legend()</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-display">
 <div>
@@ -362,19 +364,167 @@ conv final test acc:    0.9781</code></pre>
 </div>
 </div>
 </div>
-<p>And we observe that applying batch norm helps early training - we achive better performance earlier. And while we would probably obtain the same test accuracy given more epochs with both methods, training without BN already fails at a learning rate of <span class="math inline">\(0.05\)</span>.</p>
+<p>And we observe that applying batch norm helps early training (we achive better performance earlier) and makes training more robust to learning rate selection.</p>
+<p><a href="https://proceedings.neurips.cc/paper/2018/hash/36072923bfc3cf47745d704feb489480-Abstract.html"><em>Understanding Batch Normalization</em></a> poses that batch norm’s main benefit is that is allows for greater learning rates by containing activation blowup (especially in later layers), which in turn biases the optimization to “flatter” minimas with better generalization.</p>
+<p>It seems our small experiment aligns with the paper, even though our network is quite shallow.</p>
 </section>
 <section id="q3" class="level2">
 <h2 class="anchored" data-anchor-id="q3">Q3</h2>
 <p>Do we need batch normalization in every layer? Experiment with it.</p>
+<p>The paper demonstrates that it is more benefitial in later layers. Let’s see if it is in our case and remove each batch norm in turn, logging test accuracies and activations. We trained 5 nets per configuration.</p>
+<div id="cell-23" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Redefine the model</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BNLeNet(nn.Module):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, num_classes <span class="op">=</span> <span class="dv">10</span>, ex_bn_layers <span class="op">=</span> []):</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ex_bn_layers: list of BN layers to exclude (1, ..., 4)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> ex_bn_layers: <span class="cf">assert</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">5</span>), <span class="st">'There are only 4 BN layers'</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        layers <span class="op">=</span> [</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            nn.LazyConv2d(<span class="dv">6</span>, kernel_size<span class="op">=</span><span class="dv">5</span>), nn.LazyBatchNorm2d(), nn.Sigmoid(),</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>            nn.AvgPool2d(kernel_size<span class="op">=</span><span class="dv">2</span>, stride<span class="op">=</span><span class="dv">2</span>),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>            nn.LazyConv2d(<span class="dv">16</span>, kernel_size<span class="op">=</span><span class="dv">5</span>), nn.LazyBatchNorm2d(), nn.Sigmoid(),</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>            nn.AvgPool2d(kernel_size<span class="op">=</span><span class="dv">2</span>, stride<span class="op">=</span><span class="dv">2</span>),</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>            nn.Flatten(),</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>            nn.LazyLinear(<span class="dv">120</span>), nn.LazyBatchNorm1d(), nn.Sigmoid(),</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>            nn.LazyLinear(<span class="dv">84</span>), nn.LazyBatchNorm1d(), nn.Sigmoid(),</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>            nn.LazyLinear(num_classes)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        bn_idx <span class="op">=</span> [i <span class="cf">for</span> i, module <span class="kw">in</span> <span class="bu">enumerate</span>(layers) <span class="cf">if</span> <span class="st">'BatchNorm'</span> <span class="kw">in</span> <span class="bu">str</span>(module)]</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> ex_bn_layers: layers[bn_idx[i <span class="op">-</span> <span class="dv">1</span>]] <span class="op">=</span> nn.Identity()</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.net <span class="op">=</span> nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.net(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="cell-24" class="cell">
+<details class="code-fold">
+<summary>Train and evaluate</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>train_loader <span class="op">=</span> DataLoader(training_data, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>test_loader <span class="op">=</span> DataLoader(testing_data, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">False</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>imgs, labels <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(train_loader))</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>ex_bn_layers <span class="op">=</span> [[], [<span class="dv">1</span>], [<span class="dv">2</span>], [<span class="dv">3</span>], [<span class="dv">4</span>]]</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>mag_layers <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">6</span>, <span class="dv">11</span>, <span class="dv">14</span>]</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> []</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ex <span class="kw">in</span> ex_bn_layers:</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(ex)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epochs <span class="kw">in</span> [<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>]:</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(epochs)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>            net <span class="op">=</span> BNLeNet(ex_bn_layers <span class="op">=</span> ex)</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>            test_accs <span class="op">=</span> train(net, train_loader, test_loader, num_epochs <span class="op">=</span> epochs, lr <span class="op">=</span> <span class="fl">0.1</span>, verbose <span class="op">=</span> <span class="va">False</span>)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>            tmp <span class="op">=</span> {</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>                <span class="st">'Excluded BN layers'</span>: ex[<span class="dv">0</span>] <span class="cf">if</span> ex <span class="cf">else</span> <span class="dv">0</span>,</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>                <span class="st">'Epochs'</span>: epochs,</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>                <span class="st">'Test accuracy'</span>: test_accs[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>                <span class="st">'Iter'</span>: i</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> lyr <span class="kw">in</span> mag_layers:</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>                sub <span class="op">=</span> net.net[:lyr]</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>                <span class="cf">with</span> torch.no_grad(): </span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>                    mag <span class="op">=</span> (sub(imgs) <span class="op">**</span> <span class="dv">2</span>).mean()</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>                    tmp[<span class="ss">f'Mean mag at </span><span class="sc">{</span>lyr<span class="sc">}</span><span class="ss">'</span>] <span class="op">=</span> mag.item()</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>            results.append(tmp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Does performance change?</p>
+<div id="cell-26" class="cell" data-execution_count="266">
+<details class="code-fold">
+<summary>Plot test accuracies</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> pd.DataFrame(results)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>res[<span class="st">'Excluded BN layers'</span>].replace({<span class="dv">0</span>: <span class="st">'None'</span>, <span class="dv">1</span>: <span class="st">'2'</span>, <span class="dv">2</span>: <span class="st">'6'</span>, <span class="dv">3</span>: <span class="st">'11'</span>, <span class="dv">4</span>: <span class="st">'14'</span>}, inplace <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>sns.barplot(data <span class="op">=</span> res, x <span class="op">=</span> <span class="st">'Excluded BN layers'</span>, y <span class="op">=</span> <span class="st">'Test accuracy'</span>, hue <span class="op">=</span> <span class="st">'Epochs'</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="fl">0.5</span>, <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="8-5_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>It seems that removing the first batch norm (in the second layer) has the strongest hit on performance.</p>
+<p>What about activations? Let’s plot the <span class="math inline">\(l_2\)</span> norm of activations of layers that come right after batch norm layers:</p>
+<div id="cell-28" class="cell" data-execution_count="267">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="dv">4</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, lyr <span class="kw">in</span> <span class="bu">enumerate</span>(mag_layers):</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    sns.barplot(data <span class="op">=</span> res, x <span class="op">=</span> <span class="st">'Excluded BN layers'</span>, y <span class="op">=</span> <span class="ss">f'Mean mag at </span><span class="sc">{</span>lyr<span class="sc">}</span><span class="ss">'</span>, ax <span class="op">=</span> axs[i], hue<span class="op">=</span><span class="st">'Epochs'</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    axs[i].set_title(<span class="ss">f'Layer </span><span class="sc">{</span>lyr<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    axs[i].set_ylabel(<span class="st">''</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">'Mean act L2 magnitude'</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="8-5_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We can definitely an effect when we remove batch norm layers. In general the activation magnitudes decrease in the removed layer. I.e. layer 2’s magnitudes when its batch norm is removed are lower than in the original network, and so on for the other layers. It also seems that other layers compensate for this decrease by increasing their magnitudes. Finally, as the paper points out, the effects appear stronger in early epochs.</p>
 </section>
 <section id="q4" class="level2">
 <h2 class="anchored" data-anchor-id="q4">Q4</h2>
 <p>Implement a “lite” version of batch normalization that only removes the mean, or alternatively one that only removes the variance. How does it behave?</p>
+<p>We can freeze <code>BatchNorm</code>’s weight and bias params respectively:</p>
+<div id="cell-31" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Train and evaluate</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> remove_mean, remove_var <span class="kw">in</span> [[<span class="va">True</span>, <span class="va">True</span>], [<span class="va">False</span>, <span class="va">True</span>], [<span class="va">True</span>, <span class="va">False</span>], [<span class="va">False</span>, <span class="va">False</span>]]:</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># All nets "see" the same data</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(<span class="dv">0</span>)<span class="op">;</span> np.random.seed(<span class="dv">0</span>)<span class="op">;</span> random.seed(<span class="dv">0</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> torch.Generator()</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    g.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    net <span class="op">=</span> BNLeNet()</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> module <span class="kw">in</span> net.net:</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">'BatchNorm'</span> <span class="kw">in</span> <span class="bu">str</span>(module):</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> remove_mean:</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>                module.bias.requires_grad <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> remove_var:</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                module.weight.requires_grad <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    train_loader <span class="op">=</span> DataLoader(training_data, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">True</span>, worker_init_fn <span class="op">=</span> seed_worker, generator <span class="op">=</span> g)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    test_accs <span class="op">=</span> train(net, train_loader, test_loader, num_epochs <span class="op">=</span> <span class="dv">10</span>, lr <span class="op">=</span> <span class="fl">0.1</span>, verbose <span class="op">=</span> <span class="va">False</span>)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Remove mean: </span><span class="sc">{</span>remove_mean<span class="sc">}</span><span class="ss"> Remove var: </span><span class="sc">{</span>remove_var<span class="sc">}</span><span class="ch">\t\t</span><span class="ss">final test acc: </span><span class="sc">{</span>test_accs[<span class="op">-</span><span class="dv">1</span>]<span class="sc">}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Remove mean: True Remove var: True      final test acc: 0.9674
+Remove mean: False Remove var: True     final test acc: 0.9676
+Remove mean: True Remove var: False     final test acc: 0.9796
+Remove mean: False Remove var: False        final test acc: 0.98</code></pre>
+</div>
+</div>
+<p>It appears that only removing the variance has more of an effect in our case. Is this generally true? Haven’t found anything online yet.</p>
 </section>
 <section id="q5" class="level2">
 <h2 class="anchored" data-anchor-id="q5">Q5</h2>
 <p>Fix the parameters beta and gamma. Observe and analyze the results.</p>
+<p>We can accomplish this by <code>affine = False</code> in <code>BatchNorm</code> layers.</p>
 </section>
 <section id="q6" class="level2">
 <h2 class="anchored" data-anchor-id="q6">Q6</h2>
