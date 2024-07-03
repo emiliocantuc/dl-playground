@@ -628,6 +628,8 @@ Remove mean: False Remove var: False        final test acc: 0.98</code></pre>
 </div>
 </div>
 <p>It seems that they did, especially the weights.</p>
+<p><strong>Note:</strong> In Q4 and Q5 we removed various components of batch norm layers were removed and performance was compared. However, we used the same fixed learning rate <span class="math inline">\(0.1\)</span> for all configurations. A more thorough analysis would have found the optimal learning rate for each configuration, as Appendix F of the paper does:</p>
+<p><img src="images/fig13.png" class="img-fluid"></p>
 </section>
 <section id="q6" class="level2">
 <h2 class="anchored" data-anchor-id="q6">Q6</h2>
