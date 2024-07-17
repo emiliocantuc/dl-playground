@@ -5,6 +5,7 @@ Learning and playing around with pytorch by doing textbook exercises, paper repr
 ## Partial Paper Reproductions
 Where I attempt to reproduce part of papers I find interesting. Should not be taken as rigorous reproduction attempts.
 
+- [Understanding Batch Normalization](/understanding-bn/main.html)
 - [Deep Learning is Robust to Massive Label Noise](/dl-massive-label-noise/playground.html)
 
 

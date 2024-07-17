@@ -111,7 +111,12 @@ window.Quarto = {
   <ul>
   <li><a href="#convolutional-bn-layer" id="toc-convolutional-bn-layer" class="nav-link active" data-scroll-target="#convolutional-bn-layer">Convolutional BN Layer</a></li>
   <li><a href="#experimental-setup" id="toc-experimental-setup" class="nav-link" data-scroll-target="#experimental-setup">Experimental setup</a></li>
-  <li><a href="#what-i-learned" id="toc-what-i-learned" class="nav-link" data-scroll-target="#what-i-learned">What I learned</a></li>
+  <li><a href="#fig-1" id="toc-fig-1" class="nav-link" data-scroll-target="#fig-1">Fig 1</a></li>
+  <li><a href="#fig-2" id="toc-fig-2" class="nav-link" data-scroll-target="#fig-2">Fig 2</a></li>
+  <li><a href="#fig-3" id="toc-fig-3" class="nav-link" data-scroll-target="#fig-3">Fig 3</a></li>
+  <li><a href="#fig-5" id="toc-fig-5" class="nav-link" data-scroll-target="#fig-5">Fig 5</a></li>
+  <li><a href="#fig-6" id="toc-fig-6" class="nav-link" data-scroll-target="#fig-6">Fig 6</a></li>
+  <li><a href="#what-i-learned-practiced" id="toc-what-i-learned-practiced" class="nav-link" data-scroll-target="#what-i-learned-practiced">What I learned / practiced</a></li>
   </ul>
 </nav>
 </div>
@@ -148,10 +153,10 @@ window.Quarto = {
 <blockquote class="blockquote">
 <p>“We show that the activations and gradients in deep neural networks without BN tend to be heavy-tailed. In particular, during an early on-set of divergence, a small subset of activations (typically in deep layer) “explode”. The typical practice to avoid such divergence is to set the learning rate to be sufficiently small such that no steep gradient direction can lead to divergence. However, small learning rates yield little progress along flat directions of the optimization landscape and may be more prone to convergence to sharp local minima with possibly worse generalization performance.”</p>
 </blockquote>
-<p>The experiments are primarily done with a ResNet 110 trained on CIFAR-10. We will attempt to reproduce figures 1-6.</p>
+<p>We attempt to reproduce figures 1-3, 5, and 6.</p>
 <section id="convolutional-bn-layer" class="level3">
 <h3 class="anchored" data-anchor-id="convolutional-bn-layer">Convolutional BN Layer</h3>
-<p>As a reminder, the input <span class="math inline">\(I\)</span> and output <span class="math inline">\(O\)</span> tensors to a batch norm layer are 4 dimentional. The dimentions <span class="math inline">\((b, c, x, y)\)</span> correspond to the batch example, channel and spatial <span class="math inline">\(x\)</span>, <span class="math inline">\(y\)</span> dimentions respectively. Batch norm (BN) applies a channel-wise normalization:</p>
+<p>As a reminder, the input <span class="math inline">\(I\)</span> and output <span class="math inline">\(O\)</span> tensors to a batch norm layer are 4 dimensional. The dimensions <span class="math inline">\((b, c, x, y)\)</span> correspond to the batch example, channel, and spatial <span class="math inline">\(x\)</span>, <span class="math inline">\(y\)</span> dimensions respectively. Batch norm (BN) applies a channel-wise normalization:</p>
 <p><span class="math display">\[
 O_{b, c, x, y} \leftarrow \gamma_c \frac{I_{b, c, x, y} - \hat \mu_c}{\sqrt{\hat \sigma_c^2 + \epsilon}} + \beta_c
 \]</span></p>
@@ -162,12 +167,12 @@ O_{b, c, x, y} \leftarrow \gamma_c \frac{I_{b, c, x, y} - \hat \mu_c}{\sqrt{\hat
 <p><span class="math display">\[
 \hat \sigma_c^2 = \frac{1}{\mathcal |B|} \sum_{b, x, y} (I_{b, c, x, y} - \hat \mu_c) ^ 2
 \]</span></p>
-<p>To make sure the layer does not loose expressive power we introduce learned parameters <span class="math inline">\(\gamma_c\)</span> and <span class="math inline">\(\beta_c\)</span>. <span class="math inline">\(\epsilon\)</span> is a small constant added for numerical stability. In pytorch we can simply use the <code>BatchNorm2d</code> layer.</p>
+<p>To make sure the layer does not lose expressive power we introduce learned parameters <span class="math inline">\(\gamma_c\)</span> and <span class="math inline">\(\beta_c\)</span>. <span class="math inline">\(\epsilon\)</span> is a small constant added for numerical stability. In pytorch, we can simply use the <code>BatchNorm2d</code> layer.</p>
 </section>
 <section id="experimental-setup" class="level3">
 <h3 class="anchored" data-anchor-id="experimental-setup">Experimental setup</h3>
-<p>Let’s setup our data loaders, model and training loop as described in Appendix B of the paper.</p>
-<div id="cell-6" class="cell" data-execution_count="2">
+<p>Let’s set up our data loaders, model, and training loop as described in Appendix B of the paper.</p>
+<div id="cell-6" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Imports and model evaluation function</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
@@ -206,319 +211,251 @@ O_{b, c, x, y} \leftarrow \gamma_c \frac{I_{b, c, x, y} - \hat \mu_c}{\sqrt{\hat
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>            _, pred <span class="op">=</span> torch.<span class="bu">max</span>(model(images), <span class="dv">1</span>)</span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>            correct <span class="op">+=</span> (pred <span class="op">==</span> labels).<span class="bu">float</span>().<span class="bu">sum</span>().item()</span>
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>            loss <span class="op">+=</span> criterion(model(images), labels).item()</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> loss <span class="op">/</span> <span class="bu">len</span>(test.dataset), correct <span class="op">/</span> <span class="bu">len</span>(test.dataset)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> loss <span class="op">/</span> <span class="bu">len</span>(test.dataset), correct <span class="op">/</span> <span class="bu">len</span>(test.dataset)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>device</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>device(type='mps')</code></pre>
 </div>
-<p>The paper trains ResNet-101s (110 in the paper is a typo?) on CIFAR-10, with channel-wise normalization, random horizontal flipping, and 32-by-32 cropping with 4-pixel zero padding.</p>
+</div>
+<p>The paper trains ResNet-110s on CIFAR-10, with channel-wise normalization, random horizontal flipping, and 32-by-32 cropping with 4-pixel zero padding. We’ll train the ResNet-101 included in torchvision but keep everything the same.</p>
 <p>We first get the datasets and compute the channel-wise means and variances. Note: both the training and validation set have the same values.</p>
 <div id="cell-8" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Datasets and channel-wise means and stds</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> datasets.CIFAR10(<span class="st">'./data'</span>, download <span class="op">=</span> <span class="va">True</span>, train <span class="op">=</span> <span class="va">True</span>, transform <span class="op">=</span> transforms.ToTensor())</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>val <span class="op">=</span> datasets.CIFAR10(<span class="st">'./data'</span>, download <span class="op">=</span> <span class="va">True</span>, train <span class="op">=</span> <span class="va">False</span>, transform <span class="op">=</span> transforms.ToTensor())</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> channel_means_stds(dataset):</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    imgs <span class="op">=</span> torch.stack([img <span class="cf">for</span> img, _ <span class="kw">in</span> train])</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> imgs.mean(dim <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">3</span>]), imgs.std(dim <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">3</span>])</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>means, stds <span class="op">=</span> channel_means_stds(train)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Training channel-wise</span><span class="ch">\n\t</span><span class="ss">means: </span><span class="sc">{</span>means<span class="sc">}</span><span class="ch">\n\t</span><span class="ss">stds: </span><span class="sc">{</span>stds<span class="sc">}</span><span class="ss">'</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>means, stds <span class="op">=</span> channel_means_stds(val)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Validation channel-wise</span><span class="ch">\n\t</span><span class="ss">means: </span><span class="sc">{</span>means<span class="sc">}</span><span class="ch">\n\t</span><span class="ss">stds: </span><span class="sc">{</span>stds<span class="sc">}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>train_set <span class="op">=</span> datasets.CIFAR10(<span class="st">'./data'</span>, download <span class="op">=</span> <span class="va">True</span>, train <span class="op">=</span> <span class="va">True</span>, transform <span class="op">=</span> transforms.ToTensor())</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>val_set <span class="op">=</span> datasets.CIFAR10(<span class="st">'./data'</span>, download <span class="op">=</span> <span class="va">True</span>, train <span class="op">=</span> <span class="va">False</span>, transform <span class="op">=</span> transforms.ToTensor())</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> channel_means_stds(dataset):</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    imgs <span class="op">=</span> torch.stack([img <span class="cf">for</span> img, _ <span class="kw">in</span> train_set])</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> imgs.mean(dim <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">3</span>]), imgs.std(dim <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">3</span>])</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>means, stds <span class="op">=</span> channel_means_stds(train_set)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Training channel-wise</span><span class="ch">\n\t</span><span class="ss">means: </span><span class="sc">{</span>means<span class="sc">}</span><span class="ch">\n\t</span><span class="ss">stds: </span><span class="sc">{</span>stds<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>means, stds <span class="op">=</span> channel_means_stds(val_set)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'Validation channel-wise</span><span class="ch">\n\t</span><span class="ss">means: </span><span class="sc">{</span>means<span class="sc">}</span><span class="ch">\n\t</span><span class="ss">stds: </span><span class="sc">{</span>stds<span class="sc">}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>We now define the transforms with data aumentation and data loaders with batch size <span class="math inline">\(128\)</span>.</p>
+<p>We now define the transforms with data augmentation and data loaders with batch size <span class="math inline">\(128\)</span>.</p>
 <div id="cell-10" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Data transforms and data loaders</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>train_transform <span class="op">=</span> transforms.Compose([</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    transforms.RandomCrop(<span class="dv">32</span>, padding <span class="op">=</span> <span class="dv">4</span>),</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    transforms.RandomHorizontalFlip(),</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    transforms.ToTensor(),</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    transforms.Normalize(means, stds),</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>])</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># We do not perform data augmentation on the validation set</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>val_transform <span class="op">=</span> transforms.Compose([</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    transforms.ToTensor(),</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    transforms.Normalize(means, stds),</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>])</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>train.transform <span class="op">=</span> train_transform</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>val.transform <span class="op">=</span> val_transform</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>train_loader <span class="op">=</span> DataLoader(train, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">True</span>)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>val_loader <span class="op">=</span> DataLoader(val, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>train_transform <span class="op">=</span> transforms.Compose([</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    transforms.RandomCrop(<span class="dv">32</span>, padding <span class="op">=</span> <span class="dv">4</span>),</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    transforms.RandomHorizontalFlip(),</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    transforms.ToTensor(),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    transforms.Normalize(means, stds),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># We do not perform data augmentation on the validation set</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>val_transform <span class="op">=</span> transforms.Compose([</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    transforms.ToTensor(),</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    transforms.Normalize(means, stds),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>train_set.transform <span class="op">=</span> train_transform</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>val_set.transform <span class="op">=</span> val_transform</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>train_loader <span class="op">=</span> DataLoader(train_set, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>val_loader <span class="op">=</span> DataLoader(val_set, batch_size <span class="op">=</span> <span class="dv">128</span>, shuffle <span class="op">=</span> <span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>We’ll use <code>torchvision</code>’s implementation of ResNet-101, Xavier initialization, SGD with momentum <span class="math inline">\(0.9\)</span> and weight decay <span class="math inline">\(5\times 10^{-4}\)</span>, and cross entropy loss. We implement the learning rate schedule and training details mentioned:</p>
+<p>We’ll use <code>torchvision</code>’s implementation of ResNet-101, Xavier initialization, SGD with momentum <span class="math inline">\(0.9\)</span> and weight decay <span class="math inline">\(5\times 10^{-4}\)</span>, and cross-entropy loss. We try to implement the training details and learning rate scheduling as mentioned in the paper:</p>
 <blockquote class="blockquote">
 <p>“Initially, all models are trained for 165 epochs and as in [17] we divide the learning rate by 10 after epoch 50% and 75%, at which point learning has typically plateued. If learning doesn’t plateu for some number of epochs, we roughly double the number of epochs until it does”.</p>
 </blockquote>
-<div id="cell-12" class="cell" data-execution_count="5">
+<div id="cell-12" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Init, and train functions</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> xavier_init(m):</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(m, nn.Conv2d) <span class="kw">or</span> <span class="bu">isinstance</span>(m, nn.Linear):</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        nn.init.xavier_uniform_(m.weight)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_epoch(model, train, optimizer, criterion):</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Trains the model for one epoch</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    model.train()</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    train_loss, correct <span class="op">=</span> <span class="fl">0.0</span>, <span class="dv">0</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> images, labels <span class="kw">in</span> train:</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        images, labels <span class="op">=</span> images.to(device), labels.to(device)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        optimizer.zero_grad()</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        output <span class="op">=</span> model(images)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        loss <span class="op">=</span> criterion(output, labels)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        loss.backward()</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        optimizer.step()</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        train_loss <span class="op">+=</span> loss.item()</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        _, pred <span class="op">=</span> torch.<span class="bu">max</span>(output, <span class="dv">1</span>)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        correct <span class="op">+=</span> (pred <span class="op">==</span> labels).<span class="bu">float</span>().<span class="bu">sum</span>().item()</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_loss <span class="op">/</span> <span class="bu">len</span>(train.dataset), correct <span class="op">/</span> <span class="bu">len</span>(train.dataset)</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train(model, train, val, init_lr, plateau_patience <span class="op">=</span> <span class="dv">5</span>):</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> optim.SGD(model.parameters(), lr <span class="op">=</span> init_lr, momentum <span class="op">=</span> <span class="fl">0.9</span>, weight_decay <span class="op">=</span> <span class="fl">5e-4</span>)</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    criterion <span class="op">=</span> nn.CrossEntropyLoss()</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    model.to(device)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    init_epochs <span class="op">=</span> <span class="dv">165</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    lr_schedule <span class="op">=</span> {</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        <span class="bu">int</span>(init_epochs <span class="op">*</span> <span class="fl">0.5</span>): init_lr <span class="op">//</span> <span class="dv">10</span>,</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>        <span class="bu">int</span>(init_epochs <span class="op">*</span> <span class="fl">0.75</span>): init_lr <span class="op">//</span> <span class="dv">100</span>,</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    epoch <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    plateau_count <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    best_accuracy <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    train_losses, train_accs, val_losses, val_accs <span class="op">=</span> [], [], [], []</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> epoch <span class="op">&lt;</span> init_epochs <span class="kw">and</span> plateau_count <span class="op">&lt;</span> plateau_patience:</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update the learning rate</span></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="kw">in</span> lr_schedule:</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> param_group <span class="kw">in</span> optimizer.param_groups:</span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>                param_group[<span class="st">'lr'</span>] <span class="op">=</span> lr_schedule[epoch]</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Train the model for an epoch</span></span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>        loss, acc <span class="op">=</span> train_epoch(model, train, optimizer, criterion)</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>        train_losses.append(loss)</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>        train_accs.append(acc)</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Evaluate the model on the validation set</span></span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>        val_loss, val_acc <span class="op">=</span> eval_model(model, val, criterion)</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>        val_losses.append(val_loss)</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>        val_accs.append(val_acc)</span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Check for a plateau</span></span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> val_acc <span class="op">&gt;</span> best_accuracy:</span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>            best_accuracy <span class="op">=</span> val_acc</span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>            plateau_count <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>            plateau_count <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>        epoch <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>        <span class="co"># "If learning doesn’t plateu for some number of epochs,</span></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>        <span class="co"># we roughly double the number of epochs until it does."</span></span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">==</span> init_epochs <span class="kw">and</span> plateau_count <span class="op">&lt;</span> plateau_patience:</span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>            init_epochs <span class="op">*=</span> <span class="dv">2</span></span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Epoch </span><span class="sc">{</span>epoch <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>init_epochs<span class="sc">}</span><span class="ss"> | '</span></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f'Training loss: </span><span class="sc">{</span>train_losses[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss"> | '</span></span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f'Validation loss: </span><span class="sc">{</span>val_losses[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss"> | '</span></span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f'Validation accuracy: </span><span class="sc">{</span>val_accs[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">'</span>)</span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_losses, val_losses, val_accs</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> xavier_init(m):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(m, nn.Conv2d) <span class="kw">or</span> <span class="bu">isinstance</span>(m, nn.Linear):</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        nn.init.xavier_uniform_(m.weight)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_epoch(model, train, optimizer, criterion):</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Trains the model for one epoch</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    model.train()</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    train_loss, correct <span class="op">=</span> <span class="fl">0.0</span>, <span class="dv">0</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> images, labels <span class="kw">in</span> train:</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        images, labels <span class="op">=</span> images.to(device), labels.to(device)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        optimizer.zero_grad()</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        output <span class="op">=</span> model(images)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        loss <span class="op">=</span> criterion(output, labels)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        loss.backward()</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        optimizer.step()</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        train_loss <span class="op">+=</span> loss.item()</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        _, pred <span class="op">=</span> torch.<span class="bu">max</span>(output, <span class="dv">1</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        correct <span class="op">+=</span> (pred <span class="op">==</span> labels).<span class="bu">float</span>().<span class="bu">sum</span>().item()</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_loss <span class="op">/</span> <span class="bu">len</span>(train.dataset), correct <span class="op">/</span> <span class="bu">len</span>(train.dataset)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train(model, train, val, init_lr, plateau_patience <span class="op">=</span> <span class="dv">20</span>):</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> optim.SGD(model.parameters(), lr <span class="op">=</span> init_lr, momentum <span class="op">=</span> <span class="fl">0.9</span>, weight_decay <span class="op">=</span> <span class="fl">5e-4</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    scheduler  <span class="op">=</span> optim.lr_scheduler.MultiStepLR(optimizer, milestones <span class="op">=</span> [<span class="dv">82</span>, <span class="dv">123</span>], gamma <span class="op">=</span> <span class="fl">0.1</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    criterion <span class="op">=</span> nn.CrossEntropyLoss()</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    model.to(device)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    init_epochs <span class="op">=</span> <span class="dv">165</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    epoch <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    plateau_count <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    best_loss <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    train_losses, train_accs, val_losses, val_accs <span class="op">=</span> [], [], [], []</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> epoch <span class="op">&lt;</span> init_epochs <span class="kw">and</span> plateau_count <span class="op">&lt;</span> plateau_patience:</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Train the model for an epoch</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>        loss, acc <span class="op">=</span> train_epoch(model, train, optimizer, criterion)</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>        train_losses.append(loss)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>        train_accs.append(acc)</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Evaluate the model on the validation set</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>        val_loss, val_acc <span class="op">=</span> eval_model(model, val, criterion)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>        val_losses.append(val_loss)</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>        val_accs.append(val_acc)</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update the learning rate</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>        scheduler.step(val_loss)</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Check for a plateau</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> best_loss <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> val_loss <span class="op">&lt;</span> best_loss:</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>            best_loss <span class="op">=</span> val_loss</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>            plateau_count <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>            plateau_count <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>        epoch <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>        <span class="co"># "If learning doesn’t plateu for some number of epochs,</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>        <span class="co"># we roughly double the number of epochs until it does."</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">==</span> init_epochs <span class="kw">and</span> plateau_count <span class="op">&lt;</span> plateau_patience:</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>            init_epochs <span class="op">*=</span> <span class="dv">2</span></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'Epoch </span><span class="sc">{</span>epoch<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>init_epochs<span class="sc">}</span><span class="ss"> | Learning Rate: </span><span class="sc">{</span>optimizer<span class="sc">.</span>param_groups[<span class="dv">0</span>][<span class="st">"lr"</span>]<span class="sc">}</span><span class="ss"> | '</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f'Training loss: </span><span class="sc">{</span>train_losses[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss"> | '</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f'Validation loss: </span><span class="sc">{</span>val_losses[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss"> | '</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f'Validation accuracy: </span><span class="sc">{</span>val_accs[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">'</span>)</span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> train_losses, train_accs, val_losses, val_accs</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>And we define a function to disable batch norm layers in a model by replacing them for identity layers:</p>
+<p>And we define a function to disable batch norm layers in a model by replacing them with identity layers:</p>
 <div id="cell-14" class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> disable_bn(model):</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, module <span class="kw">in</span> model.named_children():</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(module, nn.BatchNorm2d):</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>            <span class="bu">setattr</span>(model, name, nn.Identity())</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            disable_bn(module)  <span class="co"># Recursively replace in child modules</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> disable_bn(model):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, module <span class="kw">in</span> model.named_children():</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(module, nn.BatchNorm2d):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>            <span class="bu">setattr</span>(model, name, nn.Identity())</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>            disable_bn(module)  <span class="co"># Recursively replace in child modules</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-15" class="cell" data-execution_count="12">
+</section>
+<section id="fig-1" class="level3">
+<h3 class="anchored" data-anchor-id="fig-1">Fig 1</h3>
+<p>Figure 1 aims to demonstrate that batch norm’s primary benefit is that it allows training with larger learning rates.</p>
+<p>The authors find the highest (<em>initial</em>) learning rate with which they can train an unnormalized model (<span class="math inline">\(\alpha = 0.0001\)</span>) and compare its performance with normalized models trained with <span class="math inline">\(\alpha \in \{0.0001, 0.003, 0.1\}\)</span>. We train each model (once - instead of five times for computational reasons) and present train and test accuracy curves.</p>
+<div id="cell-16" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Train models</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>MODELS_DIR <span class="op">=</span> <span class="st">'models'</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>LOGS_DIR <span class="op">=</span> <span class="st">'logs'</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lr, bn <span class="kw">in</span> [(<span class="fl">0.0001</span>, <span class="va">False</span>), (<span class="fl">0.0001</span>, <span class="va">True</span>), (<span class="fl">0.003</span>, <span class="va">True</span>), (<span class="fl">0.1</span>, <span class="va">True</span>)]:</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="ss">f'lr=</span><span class="sc">{</span>lr<span class="sc">}</span><span class="ss">'</span> <span class="op">+</span> (<span class="st">'_bn'</span> <span class="cf">if</span> bn <span class="cf">else</span> <span class="st">''</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(s)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">apply</span>(xavier_init)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> bn: disable_bn(model)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    torch.save(model, <span class="ss">f'</span><span class="sc">{</span>MODELS_DIR<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">_init.pth'</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> train(model, train_loader, val_loader, init_lr <span class="op">=</span> lr)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    torch.save(model, <span class="ss">f'</span><span class="sc">{</span>MODELS_DIR<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">_end.pth'</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    torch.save(data, <span class="ss">f'</span><span class="sc">{</span>LOGS_DIR<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">.pth'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="cell-17" class="cell" data-execution_count="108">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> models.resnet101()</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, param <span class="kw">in</span> model.named_parameters():</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> param.requires_grad <span class="kw">and</span> <span class="bu">len</span>(param.size()) <span class="op">&gt;</span> <span class="dv">1</span>:</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        n <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(name, param.shape, n)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>n</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># code-summary: Plot results</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>get_x <span class="op">=</span> <span class="kw">lambda</span> x: <span class="dv">100</span> <span class="op">*</span> np.arange(<span class="dv">1</span>, <span class="bu">len</span>(x) <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> <span class="bu">len</span>(x)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">9</span>, <span class="dv">4</span>), sharey <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> fname <span class="kw">in</span> os.listdir(LOGS_DIR):</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    train_losses, train_accs, val_losses, val_accs <span class="op">=</span> torch.load(<span class="ss">f'</span><span class="sc">{</span>LOGS_DIR<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>fname<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    ax1.plot(get_x(train_accs), train_accs, label <span class="op">=</span> fname[:<span class="op">-</span><span class="dv">4</span>])</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    ax2.plot(get_x(val_accs), val_accs, label <span class="op">=</span> fname[:<span class="op">-</span><span class="dv">4</span>])</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>fname[:<span class="op">-</span><span class="dv">4</span>]<span class="sc">}</span><span class="ss"> took </span><span class="sc">{</span><span class="bu">len</span>(train_accs)<span class="sc">}</span><span class="ss"> epochs'</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>ax1.legend()<span class="op">;</span> ax2.legend()</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>ax1.set_ylabel(<span class="st">'Training accuracy'</span>)<span class="op">;</span> ax2.set_ylabel(<span class="st">'Validation accuracy'</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>ax1.set_xlabel(<span class="st">'</span><span class="sc">% o</span><span class="st">f training'</span>)<span class="op">;</span> ax2.set_xlabel(<span class="st">'</span><span class="sc">% o</span><span class="st">f training'</span>)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>conv1.weight torch.Size([64, 3, 7, 7]) 1
-layer1.0.conv1.weight torch.Size([64, 64, 1, 1]) 2
-layer1.0.conv2.weight torch.Size([64, 64, 3, 3]) 3
-layer1.0.conv3.weight torch.Size([256, 64, 1, 1]) 4
-layer1.0.downsample.0.weight torch.Size([256, 64, 1, 1]) 5
-layer1.1.conv1.weight torch.Size([64, 256, 1, 1]) 6
-layer1.1.conv2.weight torch.Size([64, 64, 3, 3]) 7
-layer1.1.conv3.weight torch.Size([256, 64, 1, 1]) 8
-layer1.2.conv1.weight torch.Size([64, 256, 1, 1]) 9
-layer1.2.conv2.weight torch.Size([64, 64, 3, 3]) 10
-layer1.2.conv3.weight torch.Size([256, 64, 1, 1]) 11
-layer2.0.conv1.weight torch.Size([128, 256, 1, 1]) 12
-layer2.0.conv2.weight torch.Size([128, 128, 3, 3]) 13
-layer2.0.conv3.weight torch.Size([512, 128, 1, 1]) 14
-layer2.0.downsample.0.weight torch.Size([512, 256, 1, 1]) 15
-layer2.1.conv1.weight torch.Size([128, 512, 1, 1]) 16
-layer2.1.conv2.weight torch.Size([128, 128, 3, 3]) 17
-layer2.1.conv3.weight torch.Size([512, 128, 1, 1]) 18
-layer2.2.conv1.weight torch.Size([128, 512, 1, 1]) 19
-layer2.2.conv2.weight torch.Size([128, 128, 3, 3]) 20
-layer2.2.conv3.weight torch.Size([512, 128, 1, 1]) 21
-layer2.3.conv1.weight torch.Size([128, 512, 1, 1]) 22
-layer2.3.conv2.weight torch.Size([128, 128, 3, 3]) 23
-layer2.3.conv3.weight torch.Size([512, 128, 1, 1]) 24
-layer3.0.conv1.weight torch.Size([256, 512, 1, 1]) 25
-layer3.0.conv2.weight torch.Size([256, 256, 3, 3]) 26
-layer3.0.conv3.weight torch.Size([1024, 256, 1, 1]) 27
-layer3.0.downsample.0.weight torch.Size([1024, 512, 1, 1]) 28
-layer3.1.conv1.weight torch.Size([256, 1024, 1, 1]) 29
-layer3.1.conv2.weight torch.Size([256, 256, 3, 3]) 30
-layer3.1.conv3.weight torch.Size([1024, 256, 1, 1]) 31
-layer3.2.conv1.weight torch.Size([256, 1024, 1, 1]) 32
-layer3.2.conv2.weight torch.Size([256, 256, 3, 3]) 33
-layer3.2.conv3.weight torch.Size([1024, 256, 1, 1]) 34
-layer3.3.conv1.weight torch.Size([256, 1024, 1, 1]) 35
-layer3.3.conv2.weight torch.Size([256, 256, 3, 3]) 36
-layer3.3.conv3.weight torch.Size([1024, 256, 1, 1]) 37
-layer3.4.conv1.weight torch.Size([256, 1024, 1, 1]) 38
-layer3.4.conv2.weight torch.Size([256, 256, 3, 3]) 39
-layer3.4.conv3.weight torch.Size([1024, 256, 1, 1]) 40
-layer3.5.conv1.weight torch.Size([256, 1024, 1, 1]) 41
-layer3.5.conv2.weight torch.Size([256, 256, 3, 3]) 42
-layer3.5.conv3.weight torch.Size([1024, 256, 1, 1]) 43
-layer3.6.conv1.weight torch.Size([256, 1024, 1, 1]) 44
-layer3.6.conv2.weight torch.Size([256, 256, 3, 3]) 45
-layer3.6.conv3.weight torch.Size([1024, 256, 1, 1]) 46
-layer3.7.conv1.weight torch.Size([256, 1024, 1, 1]) 47
-layer3.7.conv2.weight torch.Size([256, 256, 3, 3]) 48
-layer3.7.conv3.weight torch.Size([1024, 256, 1, 1]) 49
-layer3.8.conv1.weight torch.Size([256, 1024, 1, 1]) 50
-layer3.8.conv2.weight torch.Size([256, 256, 3, 3]) 51
-layer3.8.conv3.weight torch.Size([1024, 256, 1, 1]) 52
-layer3.9.conv1.weight torch.Size([256, 1024, 1, 1]) 53
-layer3.9.conv2.weight torch.Size([256, 256, 3, 3]) 54
-layer3.9.conv3.weight torch.Size([1024, 256, 1, 1]) 55
-layer3.10.conv1.weight torch.Size([256, 1024, 1, 1]) 56
-layer3.10.conv2.weight torch.Size([256, 256, 3, 3]) 57
-layer3.10.conv3.weight torch.Size([1024, 256, 1, 1]) 58
-layer3.11.conv1.weight torch.Size([256, 1024, 1, 1]) 59
-layer3.11.conv2.weight torch.Size([256, 256, 3, 3]) 60
-layer3.11.conv3.weight torch.Size([1024, 256, 1, 1]) 61
-layer3.12.conv1.weight torch.Size([256, 1024, 1, 1]) 62
-layer3.12.conv2.weight torch.Size([256, 256, 3, 3]) 63
-layer3.12.conv3.weight torch.Size([1024, 256, 1, 1]) 64
-layer3.13.conv1.weight torch.Size([256, 1024, 1, 1]) 65
-layer3.13.conv2.weight torch.Size([256, 256, 3, 3]) 66
-layer3.13.conv3.weight torch.Size([1024, 256, 1, 1]) 67
-layer3.14.conv1.weight torch.Size([256, 1024, 1, 1]) 68
-layer3.14.conv2.weight torch.Size([256, 256, 3, 3]) 69
-layer3.14.conv3.weight torch.Size([1024, 256, 1, 1]) 70
-layer3.15.conv1.weight torch.Size([256, 1024, 1, 1]) 71
-layer3.15.conv2.weight torch.Size([256, 256, 3, 3]) 72
-layer3.15.conv3.weight torch.Size([1024, 256, 1, 1]) 73
-layer3.16.conv1.weight torch.Size([256, 1024, 1, 1]) 74
-layer3.16.conv2.weight torch.Size([256, 256, 3, 3]) 75
-layer3.16.conv3.weight torch.Size([1024, 256, 1, 1]) 76
-layer3.17.conv1.weight torch.Size([256, 1024, 1, 1]) 77
-layer3.17.conv2.weight torch.Size([256, 256, 3, 3]) 78
-layer3.17.conv3.weight torch.Size([1024, 256, 1, 1]) 79
-layer3.18.conv1.weight torch.Size([256, 1024, 1, 1]) 80
-layer3.18.conv2.weight torch.Size([256, 256, 3, 3]) 81
-layer3.18.conv3.weight torch.Size([1024, 256, 1, 1]) 82
-layer3.19.conv1.weight torch.Size([256, 1024, 1, 1]) 83
-layer3.19.conv2.weight torch.Size([256, 256, 3, 3]) 84
-layer3.19.conv3.weight torch.Size([1024, 256, 1, 1]) 85
-layer3.20.conv1.weight torch.Size([256, 1024, 1, 1]) 86
-layer3.20.conv2.weight torch.Size([256, 256, 3, 3]) 87
-layer3.20.conv3.weight torch.Size([1024, 256, 1, 1]) 88
-layer3.21.conv1.weight torch.Size([256, 1024, 1, 1]) 89
-layer3.21.conv2.weight torch.Size([256, 256, 3, 3]) 90
-layer3.21.conv3.weight torch.Size([1024, 256, 1, 1]) 91
-layer3.22.conv1.weight torch.Size([256, 1024, 1, 1]) 92
-layer3.22.conv2.weight torch.Size([256, 256, 3, 3]) 93
-layer3.22.conv3.weight torch.Size([1024, 256, 1, 1]) 94
-layer4.0.conv1.weight torch.Size([512, 1024, 1, 1]) 95
-layer4.0.conv2.weight torch.Size([512, 512, 3, 3]) 96
-layer4.0.conv3.weight torch.Size([2048, 512, 1, 1]) 97
-layer4.0.downsample.0.weight torch.Size([2048, 1024, 1, 1]) 98
-layer4.1.conv1.weight torch.Size([512, 2048, 1, 1]) 99
-layer4.1.conv2.weight torch.Size([512, 512, 3, 3]) 100
-layer4.1.conv3.weight torch.Size([2048, 512, 1, 1]) 101
-layer4.2.conv1.weight torch.Size([512, 2048, 1, 1]) 102
-layer4.2.conv2.weight torch.Size([512, 512, 3, 3]) 103
-layer4.2.conv3.weight torch.Size([2048, 512, 1, 1]) 104
-fc.weight torch.Size([1000, 2048]) 105</code></pre>
+<pre><code>lr=0.1_bn took 83 epochs
+lr=0.0001 took 263 epochs
+lr=0.003_bn took 69 epochs
+lr=0.0001_bn took 211 epochs</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="12">
-<pre><code>105</code></pre>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-8-output-2.png" class="img-fluid figure-img"></p>
+</figure>
 </div>
 </div>
-<div id="cell-16" class="cell" data-execution_count="22">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>layer_name <span class="op">=</span> <span class="st">'layer3.9.conv3.weight'</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>with_bn, without_bn <span class="op">=</span> [], []</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>imgs, labels <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(train_loader))</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> models.resnet101()</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>model.<span class="bu">apply</span>(xavier_init)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> bn, l <span class="kw">in</span> <span class="bu">zip</span>([<span class="va">True</span>, <span class="va">False</span>], [with_bn, without_bn]):</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> bn: disable_bn(model)</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> optim.SGD(model.parameters(), lr <span class="op">=</span> <span class="fl">0.1</span>, momentum <span class="op">=</span> <span class="fl">0.9</span>, weight_decay <span class="op">=</span> <span class="fl">5e-4</span>)</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    criterion <span class="op">=</span> nn.CrossEntropyLoss()</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    model.to(device)</span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    images, labels <span class="op">=</span> imgs.to(device), labels.to(device)</span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>    optimizer.zero_grad()</span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    output <span class="op">=</span> model(images)</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> criterion(output, labels)</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    loss.backward()</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># optimizer.step()</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, param <span class="kw">in</span> model.named_parameters():</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> name <span class="op">==</span> layer_name:</span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>            <span class="co"># l.append((param.grad ** 2).sum().item())</span></span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(param.grad.shape)</span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>            l.extend(param.grad.view(<span class="op">-</span><span class="dv">1</span>).cpu().detach().tolist())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>torch.Size([1024, 256, 1, 1])
-torch.Size([1024, 256, 1, 1])</code></pre>
 </div>
+<p>And observe the same general trends found in the original paper: similar learning rates result in about the same performance (red and orange) while increasing the rate yields better performance for normalized networks (blue) and training diverges for non-normalized ones (not shown).</p>
+</section>
+<section id="fig-2" class="level3">
+<h3 class="anchored" data-anchor-id="fig-2">Fig 2</h3>
+<p>In Figure 2 the authors begin to investigate <em>“why BN facilitates training with higher learning rates in the first place”</em>. The authors claim that batch norm (BN) prevents divergence during training, which usually occurs because of large gradients in the first mini-batches.</p>
+<p>So, the authors analyze the gradients at initialization of a midpoint layer (55) with and without batch norm. They find that gradients in unnormalized networks are consistently larger and distributed with heavier tails.</p>
+<p>I had trouble replicating this figure. I could not obtain the general shape and scale of the histograms they did:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/fig2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="500"></p>
+</figure>
 </div>
-<div id="cell-17" class="cell" data-execution_count="23">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">8</span>, <span class="dv">4</span>))</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>sns.histplot(with_bn, ax <span class="op">=</span> ax1)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>ax1.set_title(<span class="st">'With batch normalization'</span>)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>sns.histplot(without_bn, ax <span class="op">=</span> ax2)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>ax1.set_xlim(<span class="op">-</span><span class="fl">0.05</span>, <span class="fl">0.05</span>)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>ax2.set_title(<span class="st">'Without batch normalization'</span>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ax2.set_ylim((0, 2400))</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<p>At first, I thought because I was - looking at the wrong layer, +- 1 (then found it made little difference) - logging the gradient magnitudes incorrectly - why does the plot have negative values (then found the authors plot the raw gradient) - misunderstanding the whole process</p>
+<p>As I understood it, we initialize the model (using Xavier’s initialization), do a forward and backward pass on a single batch, and log the gradients at roughly the middle layer:</p>
+<div id="cell-20" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">8</span>, <span class="dv">3</span>))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>images, labels <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(val_loader))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>images, labels <span class="op">=</span> images.to(device), labels.to(device)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> bn, ax <span class="kw">in</span> <span class="bu">zip</span>([<span class="va">True</span>, <span class="va">False</span>], [ax1, ax2]):</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Init</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    model.to(device)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> bn: disable_bn(model)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">apply</span>(xavier_init)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Forward and backward pass</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    model.train()</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    output <span class="op">=</span> model(images)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> nn.CrossEntropyLoss()(output, labels)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    loss.backward()</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">eval</span>()</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    grads <span class="op">=</span> model.layer3[<span class="dv">9</span>].conv1.weight.grad.view(<span class="op">-</span><span class="dv">1</span>).cpu().detach().numpy()</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    sns.histplot(grads, ax <span class="op">=</span> ax)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>ax1.set_title(<span class="st">'With Batch Normalization'</span>)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>ax2.set_title(<span class="st">'Without Batch Normalization'</span>)</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>ax2.set_ylim((<span class="dv">0</span>, <span class="dv">2500</span>))<span class="op">;</span> ax2.set_ylabel(<span class="st">''</span>)</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -527,854 +464,419 @@ torch.Size([1024, 256, 1, 1])</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-18" class="cell" data-execution_count="194">
+<p>The unnormalized while the unnormalized gradients are heavy-tailed, however, they are still much smaller than the normalized ones. I was stuck on this for a few days until I experimented with different initializations:</p>
+<div id="cell-22" class="cell" data-execution_count="24">
 <details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, p <span class="kw">in</span> model.named_parameters():</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(name, p.data.size(), end <span class="op">=</span> <span class="st">' '</span>)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(p.data.size()) <span class="op">&gt;</span> <span class="dv">1</span>:</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        n <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'yes n = </span><span class="sc">{</span>n<span class="sc">}</span><span class="ss">'</span>, end <span class="op">=</span> <span class="st">''</span>)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>n</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>conv1.weight torch.Size([64, 3, 7, 7]) yes n = 1
-bn1.weight torch.Size([64]) 
-bn1.bias torch.Size([64]) 
-layer1.0.conv1.weight torch.Size([64, 64, 1, 1]) yes n = 2
-layer1.0.bn1.weight torch.Size([64]) 
-layer1.0.bn1.bias torch.Size([64]) 
-layer1.0.conv2.weight torch.Size([64, 64, 3, 3]) yes n = 3
-layer1.0.bn2.weight torch.Size([64]) 
-layer1.0.bn2.bias torch.Size([64]) 
-layer1.0.conv3.weight torch.Size([256, 64, 1, 1]) yes n = 4
-layer1.0.bn3.weight torch.Size([256]) 
-layer1.0.bn3.bias torch.Size([256]) 
-layer1.0.downsample.0.weight torch.Size([256, 64, 1, 1]) yes n = 5
-layer1.0.downsample.1.weight torch.Size([256]) 
-layer1.0.downsample.1.bias torch.Size([256]) 
-layer1.1.conv1.weight torch.Size([64, 256, 1, 1]) yes n = 6
-layer1.1.bn1.weight torch.Size([64]) 
-layer1.1.bn1.bias torch.Size([64]) 
-layer1.1.conv2.weight torch.Size([64, 64, 3, 3]) yes n = 7
-layer1.1.bn2.weight torch.Size([64]) 
-layer1.1.bn2.bias torch.Size([64]) 
-layer1.1.conv3.weight torch.Size([256, 64, 1, 1]) yes n = 8
-layer1.1.bn3.weight torch.Size([256]) 
-layer1.1.bn3.bias torch.Size([256]) 
-layer1.2.conv1.weight torch.Size([64, 256, 1, 1]) yes n = 9
-layer1.2.bn1.weight torch.Size([64]) 
-layer1.2.bn1.bias torch.Size([64]) 
-layer1.2.conv2.weight torch.Size([64, 64, 3, 3]) yes n = 10
-layer1.2.bn2.weight torch.Size([64]) 
-layer1.2.bn2.bias torch.Size([64]) 
-layer1.2.conv3.weight torch.Size([256, 64, 1, 1]) yes n = 11
-layer1.2.bn3.weight torch.Size([256]) 
-layer1.2.bn3.bias torch.Size([256]) 
-layer2.0.conv1.weight torch.Size([128, 256, 1, 1]) yes n = 12
-layer2.0.bn1.weight torch.Size([128]) 
-layer2.0.bn1.bias torch.Size([128]) 
-layer2.0.conv2.weight torch.Size([128, 128, 3, 3]) yes n = 13
-layer2.0.bn2.weight torch.Size([128]) 
-layer2.0.bn2.bias torch.Size([128]) 
-layer2.0.conv3.weight torch.Size([512, 128, 1, 1]) yes n = 14
-layer2.0.bn3.weight torch.Size([512]) 
-layer2.0.bn3.bias torch.Size([512]) 
-layer2.0.downsample.0.weight torch.Size([512, 256, 1, 1]) yes n = 15
-layer2.0.downsample.1.weight torch.Size([512]) 
-layer2.0.downsample.1.bias torch.Size([512]) 
-layer2.1.conv1.weight torch.Size([128, 512, 1, 1]) yes n = 16
-layer2.1.bn1.weight torch.Size([128]) 
-layer2.1.bn1.bias torch.Size([128]) 
-layer2.1.conv2.weight torch.Size([128, 128, 3, 3]) yes n = 17
-layer2.1.bn2.weight torch.Size([128]) 
-layer2.1.bn2.bias torch.Size([128]) 
-layer2.1.conv3.weight torch.Size([512, 128, 1, 1]) yes n = 18
-layer2.1.bn3.weight torch.Size([512]) 
-layer2.1.bn3.bias torch.Size([512]) 
-layer2.2.conv1.weight torch.Size([128, 512, 1, 1]) yes n = 19
-layer2.2.bn1.weight torch.Size([128]) 
-layer2.2.bn1.bias torch.Size([128]) 
-layer2.2.conv2.weight torch.Size([128, 128, 3, 3]) yes n = 20
-layer2.2.bn2.weight torch.Size([128]) 
-layer2.2.bn2.bias torch.Size([128]) 
-layer2.2.conv3.weight torch.Size([512, 128, 1, 1]) yes n = 21
-layer2.2.bn3.weight torch.Size([512]) 
-layer2.2.bn3.bias torch.Size([512]) 
-layer2.3.conv1.weight torch.Size([128, 512, 1, 1]) yes n = 22
-layer2.3.bn1.weight torch.Size([128]) 
-layer2.3.bn1.bias torch.Size([128]) 
-layer2.3.conv2.weight torch.Size([128, 128, 3, 3]) yes n = 23
-layer2.3.bn2.weight torch.Size([128]) 
-layer2.3.bn2.bias torch.Size([128]) 
-layer2.3.conv3.weight torch.Size([512, 128, 1, 1]) yes n = 24
-layer2.3.bn3.weight torch.Size([512]) 
-layer2.3.bn3.bias torch.Size([512]) 
-layer3.0.conv1.weight torch.Size([256, 512, 1, 1]) yes n = 25
-layer3.0.bn1.weight torch.Size([256]) 
-layer3.0.bn1.bias torch.Size([256]) 
-layer3.0.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 26
-layer3.0.bn2.weight torch.Size([256]) 
-layer3.0.bn2.bias torch.Size([256]) 
-layer3.0.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 27
-layer3.0.bn3.weight torch.Size([1024]) 
-layer3.0.bn3.bias torch.Size([1024]) 
-layer3.0.downsample.0.weight torch.Size([1024, 512, 1, 1]) yes n = 28
-layer3.0.downsample.1.weight torch.Size([1024]) 
-layer3.0.downsample.1.bias torch.Size([1024]) 
-layer3.1.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 29
-layer3.1.bn1.weight torch.Size([256]) 
-layer3.1.bn1.bias torch.Size([256]) 
-layer3.1.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 30
-layer3.1.bn2.weight torch.Size([256]) 
-layer3.1.bn2.bias torch.Size([256]) 
-layer3.1.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 31
-layer3.1.bn3.weight torch.Size([1024]) 
-layer3.1.bn3.bias torch.Size([1024]) 
-layer3.2.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 32
-layer3.2.bn1.weight torch.Size([256]) 
-layer3.2.bn1.bias torch.Size([256]) 
-layer3.2.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 33
-layer3.2.bn2.weight torch.Size([256]) 
-layer3.2.bn2.bias torch.Size([256]) 
-layer3.2.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 34
-layer3.2.bn3.weight torch.Size([1024]) 
-layer3.2.bn3.bias torch.Size([1024]) 
-layer3.3.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 35
-layer3.3.bn1.weight torch.Size([256]) 
-layer3.3.bn1.bias torch.Size([256]) 
-layer3.3.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 36
-layer3.3.bn2.weight torch.Size([256]) 
-layer3.3.bn2.bias torch.Size([256]) 
-layer3.3.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 37
-layer3.3.bn3.weight torch.Size([1024]) 
-layer3.3.bn3.bias torch.Size([1024]) 
-layer3.4.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 38
-layer3.4.bn1.weight torch.Size([256]) 
-layer3.4.bn1.bias torch.Size([256]) 
-layer3.4.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 39
-layer3.4.bn2.weight torch.Size([256]) 
-layer3.4.bn2.bias torch.Size([256]) 
-layer3.4.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 40
-layer3.4.bn3.weight torch.Size([1024]) 
-layer3.4.bn3.bias torch.Size([1024]) 
-layer3.5.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 41
-layer3.5.bn1.weight torch.Size([256]) 
-layer3.5.bn1.bias torch.Size([256]) 
-layer3.5.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 42
-layer3.5.bn2.weight torch.Size([256]) 
-layer3.5.bn2.bias torch.Size([256]) 
-layer3.5.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 43
-layer3.5.bn3.weight torch.Size([1024]) 
-layer3.5.bn3.bias torch.Size([1024]) 
-layer3.6.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 44
-layer3.6.bn1.weight torch.Size([256]) 
-layer3.6.bn1.bias torch.Size([256]) 
-layer3.6.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 45
-layer3.6.bn2.weight torch.Size([256]) 
-layer3.6.bn2.bias torch.Size([256]) 
-layer3.6.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 46
-layer3.6.bn3.weight torch.Size([1024]) 
-layer3.6.bn3.bias torch.Size([1024]) 
-layer3.7.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 47
-layer3.7.bn1.weight torch.Size([256]) 
-layer3.7.bn1.bias torch.Size([256]) 
-layer3.7.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 48
-layer3.7.bn2.weight torch.Size([256]) 
-layer3.7.bn2.bias torch.Size([256]) 
-layer3.7.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 49
-layer3.7.bn3.weight torch.Size([1024]) 
-layer3.7.bn3.bias torch.Size([1024]) 
-layer3.8.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 50
-layer3.8.bn1.weight torch.Size([256]) 
-layer3.8.bn1.bias torch.Size([256]) 
-layer3.8.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 51
-layer3.8.bn2.weight torch.Size([256]) 
-layer3.8.bn2.bias torch.Size([256]) 
-layer3.8.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 52
-layer3.8.bn3.weight torch.Size([1024]) 
-layer3.8.bn3.bias torch.Size([1024]) 
-layer3.9.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 53
-layer3.9.bn1.weight torch.Size([256]) 
-layer3.9.bn1.bias torch.Size([256]) 
-layer3.9.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 54
-layer3.9.bn2.weight torch.Size([256]) 
-layer3.9.bn2.bias torch.Size([256]) 
-layer3.9.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 55
-layer3.9.bn3.weight torch.Size([1024]) 
-layer3.9.bn3.bias torch.Size([1024]) 
-layer3.10.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 56
-layer3.10.bn1.weight torch.Size([256]) 
-layer3.10.bn1.bias torch.Size([256]) 
-layer3.10.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 57
-layer3.10.bn2.weight torch.Size([256]) 
-layer3.10.bn2.bias torch.Size([256]) 
-layer3.10.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 58
-layer3.10.bn3.weight torch.Size([1024]) 
-layer3.10.bn3.bias torch.Size([1024]) 
-layer3.11.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 59
-layer3.11.bn1.weight torch.Size([256]) 
-layer3.11.bn1.bias torch.Size([256]) 
-layer3.11.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 60
-layer3.11.bn2.weight torch.Size([256]) 
-layer3.11.bn2.bias torch.Size([256]) 
-layer3.11.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 61
-layer3.11.bn3.weight torch.Size([1024]) 
-layer3.11.bn3.bias torch.Size([1024]) 
-layer3.12.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 62
-layer3.12.bn1.weight torch.Size([256]) 
-layer3.12.bn1.bias torch.Size([256]) 
-layer3.12.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 63
-layer3.12.bn2.weight torch.Size([256]) 
-layer3.12.bn2.bias torch.Size([256]) 
-layer3.12.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 64
-layer3.12.bn3.weight torch.Size([1024]) 
-layer3.12.bn3.bias torch.Size([1024]) 
-layer3.13.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 65
-layer3.13.bn1.weight torch.Size([256]) 
-layer3.13.bn1.bias torch.Size([256]) 
-layer3.13.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 66
-layer3.13.bn2.weight torch.Size([256]) 
-layer3.13.bn2.bias torch.Size([256]) 
-layer3.13.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 67
-layer3.13.bn3.weight torch.Size([1024]) 
-layer3.13.bn3.bias torch.Size([1024]) 
-layer3.14.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 68
-layer3.14.bn1.weight torch.Size([256]) 
-layer3.14.bn1.bias torch.Size([256]) 
-layer3.14.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 69
-layer3.14.bn2.weight torch.Size([256]) 
-layer3.14.bn2.bias torch.Size([256]) 
-layer3.14.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 70
-layer3.14.bn3.weight torch.Size([1024]) 
-layer3.14.bn3.bias torch.Size([1024]) 
-layer3.15.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 71
-layer3.15.bn1.weight torch.Size([256]) 
-layer3.15.bn1.bias torch.Size([256]) 
-layer3.15.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 72
-layer3.15.bn2.weight torch.Size([256]) 
-layer3.15.bn2.bias torch.Size([256]) 
-layer3.15.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 73
-layer3.15.bn3.weight torch.Size([1024]) 
-layer3.15.bn3.bias torch.Size([1024]) 
-layer3.16.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 74
-layer3.16.bn1.weight torch.Size([256]) 
-layer3.16.bn1.bias torch.Size([256]) 
-layer3.16.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 75
-layer3.16.bn2.weight torch.Size([256]) 
-layer3.16.bn2.bias torch.Size([256]) 
-layer3.16.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 76
-layer3.16.bn3.weight torch.Size([1024]) 
-layer3.16.bn3.bias torch.Size([1024]) 
-layer3.17.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 77
-layer3.17.bn1.weight torch.Size([256]) 
-layer3.17.bn1.bias torch.Size([256]) 
-layer3.17.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 78
-layer3.17.bn2.weight torch.Size([256]) 
-layer3.17.bn2.bias torch.Size([256]) 
-layer3.17.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 79
-layer3.17.bn3.weight torch.Size([1024]) 
-layer3.17.bn3.bias torch.Size([1024]) 
-layer3.18.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 80
-layer3.18.bn1.weight torch.Size([256]) 
-layer3.18.bn1.bias torch.Size([256]) 
-layer3.18.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 81
-layer3.18.bn2.weight torch.Size([256]) 
-layer3.18.bn2.bias torch.Size([256]) 
-layer3.18.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 82
-layer3.18.bn3.weight torch.Size([1024]) 
-layer3.18.bn3.bias torch.Size([1024]) 
-layer3.19.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 83
-layer3.19.bn1.weight torch.Size([256]) 
-layer3.19.bn1.bias torch.Size([256]) 
-layer3.19.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 84
-layer3.19.bn2.weight torch.Size([256]) 
-layer3.19.bn2.bias torch.Size([256]) 
-layer3.19.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 85
-layer3.19.bn3.weight torch.Size([1024]) 
-layer3.19.bn3.bias torch.Size([1024]) 
-layer3.20.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 86
-layer3.20.bn1.weight torch.Size([256]) 
-layer3.20.bn1.bias torch.Size([256]) 
-layer3.20.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 87
-layer3.20.bn2.weight torch.Size([256]) 
-layer3.20.bn2.bias torch.Size([256]) 
-layer3.20.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 88
-layer3.20.bn3.weight torch.Size([1024]) 
-layer3.20.bn3.bias torch.Size([1024]) 
-layer3.21.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 89
-layer3.21.bn1.weight torch.Size([256]) 
-layer3.21.bn1.bias torch.Size([256]) 
-layer3.21.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 90
-layer3.21.bn2.weight torch.Size([256]) 
-layer3.21.bn2.bias torch.Size([256]) 
-layer3.21.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 91
-layer3.21.bn3.weight torch.Size([1024]) 
-layer3.21.bn3.bias torch.Size([1024]) 
-layer3.22.conv1.weight torch.Size([256, 1024, 1, 1]) yes n = 92
-layer3.22.bn1.weight torch.Size([256]) 
-layer3.22.bn1.bias torch.Size([256]) 
-layer3.22.conv2.weight torch.Size([256, 256, 3, 3]) yes n = 93
-layer3.22.bn2.weight torch.Size([256]) 
-layer3.22.bn2.bias torch.Size([256]) 
-layer3.22.conv3.weight torch.Size([1024, 256, 1, 1]) yes n = 94
-layer3.22.bn3.weight torch.Size([1024]) 
-layer3.22.bn3.bias torch.Size([1024]) 
-layer4.0.conv1.weight torch.Size([512, 1024, 1, 1]) yes n = 95
-layer4.0.bn1.weight torch.Size([512]) 
-layer4.0.bn1.bias torch.Size([512]) 
-layer4.0.conv2.weight torch.Size([512, 512, 3, 3]) yes n = 96
-layer4.0.bn2.weight torch.Size([512]) 
-layer4.0.bn2.bias torch.Size([512]) 
-layer4.0.conv3.weight torch.Size([2048, 512, 1, 1]) yes n = 97
-layer4.0.bn3.weight torch.Size([2048]) 
-layer4.0.bn3.bias torch.Size([2048]) 
-layer4.0.downsample.0.weight torch.Size([2048, 1024, 1, 1]) yes n = 98
-layer4.0.downsample.1.weight torch.Size([2048]) 
-layer4.0.downsample.1.bias torch.Size([2048]) 
-layer4.1.conv1.weight torch.Size([512, 2048, 1, 1]) yes n = 99
-layer4.1.bn1.weight torch.Size([512]) 
-layer4.1.bn1.bias torch.Size([512]) 
-layer4.1.conv2.weight torch.Size([512, 512, 3, 3]) yes n = 100
-layer4.1.bn2.weight torch.Size([512]) 
-layer4.1.bn2.bias torch.Size([512]) 
-layer4.1.conv3.weight torch.Size([2048, 512, 1, 1]) yes n = 101
-layer4.1.bn3.weight torch.Size([2048]) 
-layer4.1.bn3.bias torch.Size([2048]) 
-layer4.2.conv1.weight torch.Size([512, 2048, 1, 1]) yes n = 102
-layer4.2.bn1.weight torch.Size([512]) 
-layer4.2.bn1.bias torch.Size([512]) 
-layer4.2.conv2.weight torch.Size([512, 512, 3, 3]) yes n = 103
-layer4.2.bn2.weight torch.Size([512]) 
-layer4.2.bn2.bias torch.Size([512]) 
-layer4.2.conv3.weight torch.Size([2048, 512, 1, 1]) yes n = 104
-layer4.2.bn3.weight torch.Size([2048]) 
-layer4.2.bn3.bias torch.Size([2048]) 
-fc.weight torch.Size([1000, 2048]) yes n = 105
-fc.bias torch.Size([1000]) </code></pre>
-</div>
-<div class="cell-output cell-output-display" data-execution_count="194">
-<pre><code>105</code></pre>
-</div>
-</div>
-<div id="cell-19" class="cell" data-execution_count="189">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> model.parameters():</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(i.data.size())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>torch.Size([64, 3, 7, 7])
-torch.Size([64])
-torch.Size([64])
-torch.Size([64, 64, 1, 1])
-torch.Size([64])
-torch.Size([64])
-torch.Size([64, 64, 3, 3])
-torch.Size([64])
-torch.Size([64])
-torch.Size([256, 64, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 64, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([64, 256, 1, 1])
-torch.Size([64])
-torch.Size([64])
-torch.Size([64, 64, 3, 3])
-torch.Size([64])
-torch.Size([64])
-torch.Size([256, 64, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([64, 256, 1, 1])
-torch.Size([64])
-torch.Size([64])
-torch.Size([64, 64, 3, 3])
-torch.Size([64])
-torch.Size([64])
-torch.Size([256, 64, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([128, 256, 1, 1])
-torch.Size([128])
-torch.Size([128])
-torch.Size([128, 128, 3, 3])
-torch.Size([128])
-torch.Size([128])
-torch.Size([512, 128, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([512, 256, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([128, 512, 1, 1])
-torch.Size([128])
-torch.Size([128])
-torch.Size([128, 128, 3, 3])
-torch.Size([128])
-torch.Size([128])
-torch.Size([512, 128, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([128, 512, 1, 1])
-torch.Size([128])
-torch.Size([128])
-torch.Size([128, 128, 3, 3])
-torch.Size([128])
-torch.Size([128])
-torch.Size([512, 128, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([128, 512, 1, 1])
-torch.Size([128])
-torch.Size([128])
-torch.Size([128, 128, 3, 3])
-torch.Size([128])
-torch.Size([128])
-torch.Size([512, 128, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([256, 512, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([1024, 512, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([256, 1024, 1, 1])
-torch.Size([256])
-torch.Size([256])
-torch.Size([256, 256, 3, 3])
-torch.Size([256])
-torch.Size([256])
-torch.Size([1024, 256, 1, 1])
-torch.Size([1024])
-torch.Size([1024])
-torch.Size([512, 1024, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([512, 512, 3, 3])
-torch.Size([512])
-torch.Size([512])
-torch.Size([2048, 512, 1, 1])
-torch.Size([2048])
-torch.Size([2048])
-torch.Size([2048, 1024, 1, 1])
-torch.Size([2048])
-torch.Size([2048])
-torch.Size([512, 2048, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([512, 512, 3, 3])
-torch.Size([512])
-torch.Size([512])
-torch.Size([2048, 512, 1, 1])
-torch.Size([2048])
-torch.Size([2048])
-torch.Size([512, 2048, 1, 1])
-torch.Size([512])
-torch.Size([512])
-torch.Size([512, 512, 3, 3])
-torch.Size([512])
-torch.Size([512])
-torch.Size([2048, 512, 1, 1])
-torch.Size([2048])
-torch.Size([2048])
-torch.Size([1000, 2048])
-torch.Size([1000])</code></pre>
-</div>
-</div>
-<div id="cell-20" class="cell" data-execution_count="179">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, m <span class="kw">in</span> model.named_modules():</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> m.requires_grad_ <span class="kw">and</span> m.data.size <span class="op">&gt;</span> <span class="dv">1</span>:</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(name)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>        n <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>n</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-error">
-<div class="ansi-escaped-output">
-<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[179], line 3</span>
-<span class="ansi-green-fg ansi-bold">      1</span> n <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(98,98,98)">0</span>
-<span class="ansi-green-fg ansi-bold">      2</span> <span style="font-weight:bold;color:rgb(0,135,0)">for</span> name, m <span style="font-weight:bold;color:rgb(175,0,255)">in</span> model<span style="color:rgb(98,98,98)">.</span>named_modules():
-<span class="ansi-green-fg">----&gt; 3</span>     <span style="font-weight:bold;color:rgb(0,135,0)">if</span> m<span style="color:rgb(98,98,98)">.</span>requires_grad_ <span style="font-weight:bold;color:rgb(175,0,255)">and</span> <span class="ansi-yellow-bg">m</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">data</span><span style="color:rgb(98,98,98)">.</span>size <span style="color:rgb(98,98,98)">&gt;</span> <span style="color:rgb(98,98,98)">1</span>:
-<span class="ansi-green-fg ansi-bold">      4</span>         <span style="color:rgb(0,135,0)">print</span>(name)
-<span class="ansi-green-fg ansi-bold">      5</span>         n <span style="color:rgb(98,98,98)">+</span><span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(98,98,98)">1</span>
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torch/nn/modules/module.py:1695</span>, in <span class="ansi-cyan-fg">Module.__getattr__</span><span class="ansi-blue-fg">(self, name)</span>
-<span class="ansi-green-fg ansi-bold">   1693</span>     <span style="font-weight:bold;color:rgb(0,135,0)">if</span> name <span style="font-weight:bold;color:rgb(175,0,255)">in</span> modules:
-<span class="ansi-green-fg ansi-bold">   1694</span>         <span style="font-weight:bold;color:rgb(0,135,0)">return</span> modules[name]
-<span class="ansi-green-fg">-&gt; 1695</span> <span style="font-weight:bold;color:rgb(0,135,0)">raise</span> <span style="font-weight:bold;color:rgb(215,95,95)">AttributeError</span>(<span style="color:rgb(175,0,0)">f</span><span style="color:rgb(175,0,0)">"</span><span style="color:rgb(175,0,0)">'</span><span style="font-weight:bold;color:rgb(175,95,135)">{</span><span style="color:rgb(0,135,0)">type</span>(<span style="color:rgb(0,135,0)">self</span>)<span style="color:rgb(98,98,98)">.</span><span style="color:rgb(0,0,135)">__name__</span><span style="font-weight:bold;color:rgb(175,95,135)">}</span><span style="color:rgb(175,0,0)">'</span><span style="color:rgb(175,0,0)"> object has no attribute </span><span style="color:rgb(175,0,0)">'</span><span style="font-weight:bold;color:rgb(175,95,135)">{</span>name<span style="font-weight:bold;color:rgb(175,95,135)">}</span><span style="color:rgb(175,0,0)">'</span><span style="color:rgb(175,0,0)">"</span>)
-
-<span class="ansi-red-fg">AttributeError</span>: 'ResNet' object has no attribute 'data'</pre>
-</div>
-</div>
-</div>
-<div id="cell-21" class="cell" data-execution_count="140">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, m <span class="kw">in</span> model.named_children():</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(name)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>conv1
-bn1
-relu
-maxpool
-layer1
-layer2
-layer3
-layer4
-avgpool
-fc</code></pre>
-</div>
-</div>
-<div id="cell-22" class="cell" data-execution_count="127">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>disable_bn(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<summary>Trying other inits</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> init_func(f, also_linear <span class="op">=</span> <span class="va">True</span>):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> init(m):</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(m, nn.Conv2d):</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>            f(m.weight)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> also_linear <span class="kw">and</span> <span class="bu">isinstance</span>(m, nn.Linear):</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>            f(m.weight)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> init</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>criterion <span class="op">=</span> nn.CrossEntropyLoss()</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>images, labels <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(val_loader))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>images, labels <span class="op">=</span> images.to(device), labels.to(device)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>with_bn, without_bn <span class="op">=</span> {}, {}</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> init_f <span class="kw">in</span> [</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    nn.init.xavier_uniform_, nn.init.kaiming_uniform_,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    nn.init.kaiming_normal_, <span class="kw">lambda</span> x: nn.init.kaiming_normal_(x, mode <span class="op">=</span> <span class="st">'fan_out'</span>, nonlinearity<span class="op">=</span><span class="st">'relu'</span>)]:</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    init_name <span class="op">=</span> init_f.<span class="va">__name__</span>[:<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">'lambda'</span> <span class="kw">in</span> init_name: init_name <span class="op">=</span> <span class="st">'(default) kaiming_normal fan_out'</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> linear <span class="kw">in</span> (<span class="va">True</span>, <span class="va">False</span>):</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>        lin_name <span class="op">=</span> <span class="st">' w/linear lyrs'</span> <span class="cf">if</span> linear <span class="cf">else</span> <span class="st">''</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> bn, d <span class="kw">in</span> <span class="bu">zip</span>((<span class="va">True</span>, <span class="va">False</span>), (with_bn, without_bn)):</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>                model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>                model.to(device)</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="kw">not</span> bn: disable_bn(model)</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>                model.<span class="bu">apply</span>(init_func(init_f, linear))</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>                model.train()</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>                output <span class="op">=</span> model(images)</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>                loss <span class="op">=</span> criterion(output, labels)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>                loss.backward()</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>                model.<span class="bu">eval</span>()</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>                d[init_name <span class="op">+</span> lin_name] <span class="op">=</span> model.layer3[<span class="dv">9</span>].conv1.weight.grad.view(<span class="op">-</span><span class="dv">1</span>).cpu().detach().numpy()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="cell-23" class="cell" data-execution_count="132">
+<div id="cell-23" class="cell" data-execution_count="25">
 <details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>train(model, train_loader, val_loader, init_lr <span class="op">=</span> <span class="fl">0.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<summary>Plotting the results</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> init_name, v <span class="kw">in</span> with_bn.items():</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">8</span>, <span class="dv">3</span>))</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    sns.histplot(v, ax <span class="op">=</span> ax1)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    ax1.set_title(<span class="st">'with BN'</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    sns.histplot(without_bn[init_name], ax <span class="op">=</span> ax2)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    ax2.set_title(<span class="st">'without BN'</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    ax2.set_ylabel(<span class="st">''</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    ax2.set_ylim(<span class="dv">0</span>, <span class="dv">1500</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    f.suptitle(init_name)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>Epoch 2/165 | Training loss: 0.0171 | Validation loss: 0.0134 | Validation accuracy: 0.4152
-Epoch 3/165 | Training loss: 0.0123 | Validation loss: 0.0111 | Validation accuracy: 0.4976
-Epoch 4/165 | Training loss: 0.0107 | Validation loss: 0.0106 | Validation accuracy: 0.5200</code></pre>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></p>
+</figure>
 </div>
-<div class="cell-output cell-output-error">
-<div class="ansi-escaped-output">
-<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[132], line 1</span>
-<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">train</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">train_loader</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">val_loader</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">init_lr</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">0.1</span><span class="ansi-yellow-bg">)</span>
-
-Cell <span class="ansi-green-fg">In[130], line 58</span>, in <span class="ansi-cyan-fg">train</span><span class="ansi-blue-fg">(model, train, val, init_lr, plateau_patience)</span>
-<span class="ansi-green-fg ansi-bold">     55</span> train_accs<span style="color:rgb(98,98,98)">.</span>append(acc)
-<span class="ansi-green-fg ansi-bold">     57</span> <span style="font-style:italic;color:rgb(95,135,135)"># Evaluate the model on the validation set</span>
-<span class="ansi-green-fg">---&gt; 58</span> val_loss, val_acc <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">eval_model</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">val</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">criterion</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg ansi-bold">     59</span> val_losses<span style="color:rgb(98,98,98)">.</span>append(val_loss)
-<span class="ansi-green-fg ansi-bold">     60</span> val_accs<span style="color:rgb(98,98,98)">.</span>append(val_acc)
-
-Cell <span class="ansi-green-fg">In[76], line 33</span>, in <span class="ansi-cyan-fg">eval_model</span><span class="ansi-blue-fg">(model, test, criterion)</span>
-<span class="ansi-green-fg ansi-bold">     31</span> correct, loss <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(98,98,98)">0</span>, <span style="color:rgb(98,98,98)">0.0</span>
-<span class="ansi-green-fg ansi-bold">     32</span> <span style="font-weight:bold;color:rgb(0,135,0)">with</span> torch<span style="color:rgb(98,98,98)">.</span>no_grad():
-<span class="ansi-green-fg">---&gt; 33</span>     <span style="font-weight:bold;color:rgb(0,135,0)">for</span> images, labels <span style="font-weight:bold;color:rgb(175,0,255)">in</span> test:
-<span class="ansi-green-fg ansi-bold">     34</span>         images, labels <span style="color:rgb(98,98,98)">=</span> images<span style="color:rgb(98,98,98)">.</span>to(device), labels<span style="color:rgb(98,98,98)">.</span>to(device)
-<span class="ansi-green-fg ansi-bold">     35</span>         _, pred <span style="color:rgb(98,98,98)">=</span> torch<span style="color:rgb(98,98,98)">.</span>max(model(images), <span style="color:rgb(98,98,98)">1</span>)
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torch/utils/data/dataloader.py:630</span>, in <span class="ansi-cyan-fg">_BaseDataLoaderIter.__next__</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-fg ansi-bold">    627</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_sampler_iter <span style="font-weight:bold;color:rgb(175,0,255)">is</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>:
-<span class="ansi-green-fg ansi-bold">    628</span>     <span style="font-style:italic;color:rgb(95,135,135)"># TODO(https://github.com/pytorch/pytorch/issues/76750)</span>
-<span class="ansi-green-fg ansi-bold">    629</span>     <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_reset()  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[call-arg]</span>
-<span class="ansi-green-fg">--&gt; 630</span> data <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_next_data</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg ansi-bold">    631</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_num_yielded <span style="color:rgb(98,98,98)">+</span><span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(98,98,98)">1</span>
-<span class="ansi-green-fg ansi-bold">    632</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_dataset_kind <span style="color:rgb(98,98,98)">==</span> _DatasetKind<span style="color:rgb(98,98,98)">.</span>Iterable <span style="font-weight:bold;color:rgb(175,0,255)">and</span> \
-<span class="ansi-green-fg ansi-bold">    633</span>         <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_IterableDataset_len_called <span style="font-weight:bold;color:rgb(175,0,255)">is</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span> <span style="font-weight:bold;color:rgb(175,0,255)">and</span> \
-<span class="ansi-green-fg ansi-bold">    634</span>         <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_num_yielded <span style="color:rgb(98,98,98)">&gt;</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_IterableDataset_len_called:
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torch/utils/data/dataloader.py:674</span>, in <span class="ansi-cyan-fg">_SingleProcessDataLoaderIter._next_data</span><span class="ansi-blue-fg">(self)</span>
-<span class="ansi-green-fg ansi-bold">    672</span> <span style="font-weight:bold;color:rgb(0,135,0)">def</span> <span style="color:rgb(0,0,255)">_next_data</span>(<span style="color:rgb(0,135,0)">self</span>):
-<span class="ansi-green-fg ansi-bold">    673</span>     index <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_next_index()  <span style="font-style:italic;color:rgb(95,135,135)"># may raise StopIteration</span>
-<span class="ansi-green-fg">--&gt; 674</span>     data <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_dataset_fetcher</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">fetch</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">index</span><span class="ansi-yellow-bg">)</span>  <span style="font-style:italic;color:rgb(95,135,135)"># may raise StopIteration</span>
-<span class="ansi-green-fg ansi-bold">    675</span>     <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_pin_memory:
-<span class="ansi-green-fg ansi-bold">    676</span>         data <span style="color:rgb(98,98,98)">=</span> _utils<span style="color:rgb(98,98,98)">.</span>pin_memory<span style="color:rgb(98,98,98)">.</span>pin_memory(data, <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_pin_memory_device)
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torch/utils/data/_utils/fetch.py:51</span>, in <span class="ansi-cyan-fg">_MapDatasetFetcher.fetch</span><span class="ansi-blue-fg">(self, possibly_batched_index)</span>
-<span class="ansi-green-fg ansi-bold">     49</span>         data <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>dataset<span style="color:rgb(98,98,98)">.</span>__getitems__(possibly_batched_index)
-<span class="ansi-green-fg ansi-bold">     50</span>     <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
-<span class="ansi-green-fg">---&gt; 51</span>         data <span style="color:rgb(98,98,98)">=</span> [<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>dataset[idx] <span style="font-weight:bold;color:rgb(0,135,0)">for</span> idx <span style="font-weight:bold;color:rgb(175,0,255)">in</span> possibly_batched_index]
-<span class="ansi-green-fg ansi-bold">     52</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
-<span class="ansi-green-fg ansi-bold">     53</span>     data <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>dataset[possibly_batched_index]
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torch/utils/data/_utils/fetch.py:51</span>, in <span class="ansi-cyan-fg">&lt;listcomp&gt;</span><span class="ansi-blue-fg">(.0)</span>
-<span class="ansi-green-fg ansi-bold">     49</span>         data <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>dataset<span style="color:rgb(98,98,98)">.</span>__getitems__(possibly_batched_index)
-<span class="ansi-green-fg ansi-bold">     50</span>     <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
-<span class="ansi-green-fg">---&gt; 51</span>         data <span style="color:rgb(98,98,98)">=</span> [<span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">dataset</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">idx</span><span class="ansi-yellow-bg">]</span> <span style="font-weight:bold;color:rgb(0,135,0)">for</span> idx <span style="font-weight:bold;color:rgb(175,0,255)">in</span> possibly_batched_index]
-<span class="ansi-green-fg ansi-bold">     52</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
-<span class="ansi-green-fg ansi-bold">     53</span>     data <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>dataset[possibly_batched_index]
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torchvision/datasets/cifar.py:118</span>, in <span class="ansi-cyan-fg">CIFAR10.__getitem__</span><span class="ansi-blue-fg">(self, index)</span>
-<span class="ansi-green-fg ansi-bold">    115</span> img <span style="color:rgb(98,98,98)">=</span> Image<span style="color:rgb(98,98,98)">.</span>fromarray(img)
-<span class="ansi-green-fg ansi-bold">    117</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>transform <span style="font-weight:bold;color:rgb(175,0,255)">is</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>:
-<span class="ansi-green-fg">--&gt; 118</span>     img <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">transform</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">img</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg ansi-bold">    120</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>target_transform <span style="font-weight:bold;color:rgb(175,0,255)">is</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>:
-<span class="ansi-green-fg ansi-bold">    121</span>     target <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>target_transform(target)
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torchvision/transforms/transforms.py:95</span>, in <span class="ansi-cyan-fg">Compose.__call__</span><span class="ansi-blue-fg">(self, img)</span>
-<span class="ansi-green-fg ansi-bold">     93</span> <span style="font-weight:bold;color:rgb(0,135,0)">def</span> <span style="color:rgb(0,0,255)">__call__</span>(<span style="color:rgb(0,135,0)">self</span>, img):
-<span class="ansi-green-fg ansi-bold">     94</span>     <span style="font-weight:bold;color:rgb(0,135,0)">for</span> t <span style="font-weight:bold;color:rgb(175,0,255)">in</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>transforms:
-<span class="ansi-green-fg">---&gt; 95</span>         img <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">t</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">img</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg ansi-bold">     96</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> img
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torchvision/transforms/transforms.py:137</span>, in <span class="ansi-cyan-fg">ToTensor.__call__</span><span class="ansi-blue-fg">(self, pic)</span>
-<span class="ansi-green-fg ansi-bold">    129</span> <span style="font-weight:bold;color:rgb(0,135,0)">def</span> <span style="color:rgb(0,0,255)">__call__</span>(<span style="color:rgb(0,135,0)">self</span>, pic):
-<span class="ansi-green-fg ansi-bold">    130</span> <span style="color:rgb(188,188,188)">    </span><span style="font-style:italic;color:rgb(175,0,0)">"""</span>
-<span class="ansi-green-fg ansi-bold">    131</span> <span style="font-style:italic;color:rgb(175,0,0)">    Args:</span>
-<span class="ansi-green-fg ansi-bold">    132</span> <span style="font-style:italic;color:rgb(175,0,0)">        pic (PIL Image or numpy.ndarray): Image to be converted to tensor.</span>
-<span class="ansi-green-fg">   (...)</span>
-<span class="ansi-green-fg ansi-bold">    135</span> <span style="font-style:italic;color:rgb(175,0,0)">        Tensor: Converted image.</span>
-<span class="ansi-green-fg ansi-bold">    136</span> <span style="font-style:italic;color:rgb(175,0,0)">    """</span>
-<span class="ansi-green-fg">--&gt; 137</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">F</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">to_tensor</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">pic</span><span class="ansi-yellow-bg">)</span>
-
-File <span class="ansi-green-fg">~/Library/Python/3.9/lib/python/site-packages/torchvision/transforms/functional.py:174</span>, in <span class="ansi-cyan-fg">to_tensor</span><span class="ansi-blue-fg">(pic)</span>
-<span class="ansi-green-fg ansi-bold">    172</span> img <span style="color:rgb(98,98,98)">=</span> img<span style="color:rgb(98,98,98)">.</span>permute((<span style="color:rgb(98,98,98)">2</span>, <span style="color:rgb(98,98,98)">0</span>, <span style="color:rgb(98,98,98)">1</span>))<span style="color:rgb(98,98,98)">.</span>contiguous()
-<span class="ansi-green-fg ansi-bold">    173</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">isinstance</span>(img, torch<span style="color:rgb(98,98,98)">.</span>ByteTensor):
-<span class="ansi-green-fg">--&gt; 174</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">img</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">to</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">dtype</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">default_float_dtype</span><span class="ansi-yellow-bg">)</span><span style="color:rgb(98,98,98)">.</span>div(<span style="color:rgb(98,98,98)">255</span>)
-<span class="ansi-green-fg ansi-bold">    175</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
-<span class="ansi-green-fg ansi-bold">    176</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> img
-
-<span class="ansi-red-fg">KeyboardInterrupt</span>: </pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-3.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-4.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-5.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-6.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-7.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-11-output-8.png" class="img-fluid figure-img"></p>
+</figure>
 </div>
 </div>
 </div>
-<div id="cell-24" class="cell" data-execution_count="96">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>train(model, train_loader, val_loader, <span class="fl">0.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>Epoch 2/165 | Training loss: 0.0170 | Validation loss: 0.0131 | Validation accuracy: 0.3928
-Epoch 3/165 | Training loss: 0.0123 | Validation loss: 0.0109 | Validation accuracy: 0.4899</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<div class="ansi-escaped-output">
-<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
-Cell <span class="ansi-green-fg">In[96], line 1</span>
-<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">train</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">train_loader</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">val_loader</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">0.1</span><span class="ansi-yellow-bg">)</span>
-
-Cell <span class="ansi-green-fg">In[94], line 53</span>, in <span class="ansi-cyan-fg">train</span><span class="ansi-blue-fg">(model, train, val, init_lr, plateau_patience)</span>
-<span class="ansi-green-fg ansi-bold">     50</span>         param_group[<span style="color:rgb(175,0,0)">'</span><span style="color:rgb(175,0,0)">lr</span><span style="color:rgb(175,0,0)">'</span>] <span style="color:rgb(98,98,98)">=</span> lr_schedule[epoch]
-<span class="ansi-green-fg ansi-bold">     52</span> <span style="font-style:italic;color:rgb(95,135,135)"># Train the model for an epoch</span>
-<span class="ansi-green-fg">---&gt; 53</span> loss, acc <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">train_epoch</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">train</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">optimizer</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">criterion</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg ansi-bold">     54</span> train_losses<span style="color:rgb(98,98,98)">.</span>append(loss)
-<span class="ansi-green-fg ansi-bold">     55</span> train_accs<span style="color:rgb(98,98,98)">.</span>append(acc)
-
-Cell <span class="ansi-green-fg">In[94], line 19</span>, in <span class="ansi-cyan-fg">train_epoch</span><span class="ansi-blue-fg">(model, train, optimizer, criterion)</span>
-<span class="ansi-green-fg ansi-bold">     17</span> loss<span style="color:rgb(98,98,98)">.</span>backward()
-<span class="ansi-green-fg ansi-bold">     18</span> optimizer<span style="color:rgb(98,98,98)">.</span>step()
-<span class="ansi-green-fg">---&gt; 19</span> train_loss <span style="color:rgb(98,98,98)">+</span><span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">loss</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">item</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg ansi-bold">     20</span> _, pred <span style="color:rgb(98,98,98)">=</span> torch<span style="color:rgb(98,98,98)">.</span>max(output, <span style="color:rgb(98,98,98)">1</span>)
-<span class="ansi-green-fg ansi-bold">     21</span> correct <span style="color:rgb(98,98,98)">+</span><span style="color:rgb(98,98,98)">=</span> (pred <span style="color:rgb(98,98,98)">==</span> labels)<span style="color:rgb(98,98,98)">.</span>float()<span style="color:rgb(98,98,98)">.</span>sum()<span style="color:rgb(98,98,98)">.</span>item()
-
-<span class="ansi-red-fg">KeyboardInterrupt</span>: </pre>
-</div>
-</div>
+<p>As you can see the general shapes, normal vs heavy-tailed don’t depend that much on the initialization scheme but the scales do. We could only achieve the same scale of the gradients presented in the paper by using the <code>kaiming_normal</code> scheme with <code>fan=out</code> (to preserve the magnitudes of the variance of the weights in the backward pass instead of the forward one) and applying it only to <code>Conv2</code> layers. This is the default used by torchvision’s resnets.</p>
+<p>Note: <code>xavier_normal</code> produced very similar shapes/scales as <code>xavier_uniform</code> so we don’t show it.</p>
+<p>For the rest of the figures we’ll use the default init scheme:</p>
+<div id="cell-25" class="cell" data-execution_count="26">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> init_net(m):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(m, nn.Conv2d):</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        nn.init.kaiming_normal_(m.weight, mode <span class="op">=</span> <span class="st">'fan_out'</span>, nonlinearity <span class="op">=</span> <span class="st">'relu'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="what-i-learned" class="level3">
-<h3 class="anchored" data-anchor-id="what-i-learned">What I learned</h3>
+<section id="fig-3" class="level3">
+<h3 class="anchored" data-anchor-id="fig-3">Fig 3</h3>
+<p>The authors then investigate the loss landscape along the gradient direction for the first few mini-batches for models with BN (trained with <span class="math inline">\(\alpha = 0.1\)</span>) and without BN (<span class="math inline">\(\alpha = 0.0001\)</span>). For each network and mini-batch they compute the gradient and plot the relative change in the loss (new_loss/old_loss).</p>
+<p>We save the model’s and optimizer’s states (<code>state_dict</code>) before taking the tentative steps to explore the landscape and restore them before taking the actual step between batches.</p>
+<div id="cell-28" class="cell" data-execution_count="57">
+<details class="code-fold">
+<summary>Explore loss landscape</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fig3(model, init_lr, log_lrs, log_batches <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">7</span>]):</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># batch -&gt; list of relative losses for each lr</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> {}</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    criterion <span class="op">=</span> nn.CrossEntropyLoss()</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> optim.SGD(model.parameters(), lr <span class="op">=</span> init_lr, momentum <span class="op">=</span> <span class="fl">0.9</span>, weight_decay <span class="op">=</span> <span class="fl">5e-4</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, (images, labels) <span class="kw">in</span> <span class="bu">enumerate</span>(train_loader):</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>        images, labels <span class="op">=</span> images.to(device), labels.to(device)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="kw">in</span> log_batches:</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>            torch.save(model.state_dict(), <span class="ss">f'models/model_state.tmp'</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>            torch.save(optimizer.state_dict(), <span class="ss">f'models/optimizer_state.tmp'</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>            rel_losses <span class="op">=</span> []</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> lr <span class="kw">in</span> log_lrs:</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> param_group <span class="kw">in</span> optimizer.param_groups: param_group[<span class="st">'lr'</span>] <span class="op">=</span> lr</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>                optimizer.zero_grad()</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>                output <span class="op">=</span> model(images)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>                current_loss <span class="op">=</span> criterion(output, labels)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>                current_loss.backward()</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>                optimizer.step()</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>                <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>                    output <span class="op">=</span> model(images)</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>                    tmp_loss <span class="op">=</span> criterion(output, labels)</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>                    rel_loss <span class="op">=</span> (tmp_loss <span class="op">/</span> current_loss).item()</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># print learning rate, current loss, tmp loss, relative loss (at 4 decimal places)</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">print</span>(<span class="ss">f'</span><span class="sc">{</span>lr<span class="sc">:.5f}</span><span class="ss"> </span><span class="sc">{</span>current_loss<span class="sc">:.5f}</span><span class="ss"> </span><span class="sc">{</span>tmp_loss<span class="sc">:.5f}</span><span class="ss"> </span><span class="sc">{</span>rel_loss<span class="sc">:.5f}</span><span class="ss">'</span>)</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>                    rel_losses.append(rel_loss)</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>                model.load_state_dict(torch.load(<span class="st">'models/model_state.tmp'</span>))</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>                optimizer.load_state_dict(torch.load(<span class="st">'models/optimizer_state.tmp'</span>))   </span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>                <span class="co"># If loss is nan of int, break. Unlikely to recover.</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> torch.isnan(tmp_loss).item() <span class="kw">or</span> torch.isinf(tmp_loss).item():</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>                    rel_losses.pop()</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">print</span>(<span class="st">'breaking'</span>)</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">break</span></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>            out[i] <span class="op">=</span> rel_losses</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="op">==</span> <span class="bu">max</span>(log_batches): <span class="cf">break</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>        <span class="co"># take the actual step</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>        optimizer.zero_grad()</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>        output <span class="op">=</span> model(images)</span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>        loss <span class="op">=</span> criterion(output, labels)</span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>        loss.backward()</span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>        optimizer.step()</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>lrs <span class="op">=</span> np.logspace(<span class="op">-</span><span class="fl">5.5</span>, <span class="fl">0.5</span>, <span class="dv">80</span>)</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a><span class="co"># With BN</span></span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>model.to(device)</span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>model.<span class="bu">apply</span>(init_net)</span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>with_bn <span class="op">=</span> fig3(model, init_lr <span class="op">=</span> <span class="fl">0.1</span>, log_lrs <span class="op">=</span> lrs)</span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a><span class="co"># Without BN</span></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>model.to(device)</span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>disable_bn(model)</span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>model.<span class="bu">apply</span>(init_net)</span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a>without_bn <span class="op">=</span> fig3(model, init_lr <span class="op">=</span> <span class="fl">0.0001</span>, log_lrs <span class="op">=</span> lrs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="cell-29" class="cell" data-execution_count="65">
+<details class="code-fold">
+<summary>Plotting the results</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>f, axs <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">3</span>, figsize <span class="op">=</span> (<span class="dv">12</span>, <span class="dv">6</span>))</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (batch, rel_losses), ax <span class="kw">in</span> <span class="bu">zip</span>(with_bn.items(), axs[<span class="dv">0</span>]):</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    ax.plot(lrs, rel_losses)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    ax.set_xscale(<span class="st">'log'</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    ax.set_yscale(<span class="st">'log'</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    ax.set_ylim(<span class="dv">0</span>, <span class="fl">1.5</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    ax.set_xlim(<span class="dv">10</span><span class="op">**-</span><span class="fl">5.5</span>, <span class="fl">0.4</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f'Batch </span><span class="sc">{</span>batch<span class="sc">}</span><span class="ss"> with BN'</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    ax.axhline(<span class="dv">1</span>, color <span class="op">=</span> <span class="st">'grey'</span>, linestyle <span class="op">=</span> <span class="st">'--'</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (batch, rel_losses), ax <span class="kw">in</span> <span class="bu">zip</span>(without_bn.items(), axs[<span class="dv">1</span>]):</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    ax.plot(lrs[:<span class="bu">len</span>(rel_losses)], rel_losses)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    ax.set_xscale(<span class="st">'log'</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    ax.set_yscale(<span class="st">'log'</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    ax.set_ylim(<span class="dv">10</span><span class="op">**-</span><span class="dv">2</span>, <span class="dv">10</span><span class="op">**</span><span class="dv">3</span>)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    ax.set_xlim(<span class="dv">10</span><span class="op">**-</span><span class="fl">5.5</span>, <span class="fl">0.4</span>)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f'Batch </span><span class="sc">{</span>batch<span class="sc">}</span><span class="ss"> w/o BN'</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    ax.axhline(<span class="dv">1</span>, color <span class="op">=</span> <span class="st">'grey'</span>, linestyle <span class="op">=</span> <span class="st">'--'</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>, <span class="dv">0</span>].set_ylabel(<span class="st">'Relative loss'</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>, <span class="dv">0</span>].set_ylabel(<span class="st">'Relative loss'</span>)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Although we get roughly different scales, we observe that unnormalized networks reduce the loss only with small steps while normalized ones can improve with a much larger range, as in the paper.</p>
+</section>
+<section id="fig-5" class="level3">
+<h3 class="anchored" data-anchor-id="fig-5">Fig 5</h3>
+<p>Figures 5 and 6 explore the behavior of networks at initialization. Figure 5 displays the mean and variances of channels in the network as a function of depth at initialization. We initialize <span class="math inline">\(10\)</span> networks and use forward hooks to log their channel mean and standard deviations.</p>
+<div id="cell-33" class="cell" data-execution_count="45">
+<details class="code-fold">
+<summary>Log activation stats</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> []</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_activation_stats(layer_name, key):</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> hook(module, <span class="bu">input</span>, output):</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>            df.append({</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">'bn'</span>: key,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>                <span class="st">'layer'</span>: layer_name,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>                <span class="st">'mean'</span>: output[:, <span class="dv">0</span>, :, :].mean().<span class="bu">abs</span>().item(),</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>                <span class="st">'std'</span>: output[:, <span class="dv">0</span>, :, :].std().<span class="bu">abs</span>().item()</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>            })</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> hook</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> bn <span class="kw">in</span> [<span class="va">True</span>, <span class="va">False</span>]:</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>        model.to(device)</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> bn: disable_bn(model)</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">apply</span>(init_net)</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Layers to log activations from</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>        log_layers <span class="op">=</span> [] <span class="co"># (n, name, layer)</span></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> name, layer <span class="kw">in</span> model.named_modules():</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="st">'conv'</span> <span class="kw">in</span> name:</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>                n <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> n <span class="kw">in</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">5</span>, <span class="dv">101</span> <span class="op">+</span> <span class="dv">12</span>, <span class="dv">12</span>)):</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>                    log_layers.append((n, name, layer))</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> n, _, layer <span class="kw">in</span> log_layers: layer.register_forward_hook(log_activation_stats(n, <span class="bu">str</span>(bn)))</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> images, _ <span class="kw">in</span> val_loader: model(images.to(device))</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="cell-34" class="cell" data-execution_count="46">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">9</span>, <span class="dv">4</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>sns.lineplot(data <span class="op">=</span> df, x <span class="op">=</span> <span class="st">'layer'</span>, y <span class="op">=</span> <span class="st">'mean'</span>, hue <span class="op">=</span> <span class="st">'bn'</span>, ax <span class="op">=</span> ax1)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>ax1.set_yscale(<span class="st">'log'</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>sns.lineplot(data <span class="op">=</span> df, x <span class="op">=</span> <span class="st">'layer'</span>, y <span class="op">=</span> <span class="st">'std'</span>, hue <span class="op">=</span> <span class="st">'bn'</span>, ax <span class="op">=</span> ax2)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>ax2.set_yscale(<span class="st">'log'</span>)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We observe, consistent with the findings in the paper, that activation means and standard deviations increase almost exponentially in non-normalized networks, whereas they remain nearly constant in normalized networks.</p>
+</section>
+<section id="fig-6" class="level3">
+<h3 class="anchored" data-anchor-id="fig-6">Fig 6</h3>
+<p>The large activations in the final layers for unnormalized networks in the previous figure make us suspect that networks are biased towards a class. The authors investigate whether this is the case by looking at the gradients in the final (output) layer across images in a mini-batch and classes.</p>
+<p>Note: Don’t confuse this with the last fully connected layer of the network. We are looking at the gradients of the output logits themselves. We need to use <code>retain_grad</code> on the output (non-leaf node) to calculate its gradient on the backward pass.</p>
+<div id="cell-37" class="cell" data-execution_count="69">
+<details class="code-fold">
+<summary>Generate heatmaps</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">8</span>, <span class="dv">3</span>), sharey <span class="op">=</span> <span class="va">True</span>, sharex <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>images, labels <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(val_loader))</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>images, labels <span class="op">=</span> images.to(device), labels.to(device)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> bn, ax <span class="kw">in</span> <span class="bu">zip</span>([<span class="va">False</span>, <span class="va">True</span>], [ax1, ax2]):</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    model.to(device)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> bn: disable_bn(model)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">apply</span>(init_net)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> model(images)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    out.retain_grad()</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> nn.CrossEntropyLoss()(out, labels)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    loss.backward()</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    ax <span class="op">=</span> sns.heatmap(out.grad.cpu().detach().numpy(), cmap <span class="op">=</span> <span class="st">'viridis'</span>, ax <span class="op">=</span> ax)</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    ax.set_xticks([])<span class="op">;</span> ax.set_yticks([<span class="dv">0</span>, <span class="dv">40</span>, <span class="dv">80</span>, <span class="dv">120</span>])<span class="op">;</span> ax.set_yticklabels([<span class="dv">0</span>, <span class="dv">40</span>, <span class="dv">80</span>, <span class="dv">120</span>])</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">'Classes'</span>)</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">'Images in batch'</span> <span class="cf">if</span> <span class="kw">not</span> bn <span class="cf">else</span> <span class="st">''</span>)</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="st">'With BN'</span> <span class="cf">if</span> bn <span class="cf">else</span> <span class="st">'Without BN'</span>)</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>f.tight_layout()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>And basically observe the same results as the paper: &gt;“A yellow entry indicates that the gradient is positive, and the step along the negative gradient would decrease the prediction strength of this class for this particular image. A dark blue entry indicates a negative gradient, indicating that this particular class prediction should be strengthened. Each row contains one dark blue entry, which corresponds to the true class of this particular image (as initially all predictions are arbitrary). A striking observation is the distinctly yellow column in the left heatmap (network without BN). This indicates that after initialization the network tends to almost always predict the same (typically wrong) class, which is then corrected with a strong gradient update. In contrast, the network with BN does not exhibit the same behavior, instead positive gradients are distributed throughout all classes.”</p>
+<p>Running the above code multiple times, however, sometimes results in two or three yellow columns. We think this is because different mini-batches behave slightly differently or due to initialization randomness. Below, we log and average the gradients for a whole epoch and find much more consistent behavior.</p>
+<div id="cell-40" class="cell" data-execution_count="370">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fig6(init_func <span class="op">=</span> init_net):</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">8</span>, <span class="dv">3</span>), sharex <span class="op">=</span> <span class="va">True</span>, sharey <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> bn, ax <span class="kw">in</span> <span class="bu">zip</span>([<span class="va">False</span>, <span class="va">True</span>], [ax1, ax2]):</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> models.resnet101(num_classes <span class="op">=</span> <span class="dv">10</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>        model.to(device)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> bn: disable_bn(model)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">apply</span>(init_func)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>        avg_grad <span class="op">=</span> torch.zeros((<span class="dv">128</span>, <span class="dv">10</span>), device <span class="op">=</span> device)</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> images, labels <span class="kw">in</span> val_loader:</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>            images, labels <span class="op">=</span> images.to(device), labels.to(device)</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>            out <span class="op">=</span> model(images)</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>            out.retain_grad()</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>            loss <span class="op">=</span> nn.CrossEntropyLoss()(out, labels)</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>            loss.backward()</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> out.grad.shape <span class="op">==</span> avg_grad.shape: avg_grad <span class="op">+=</span> out.grad</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>        avg_grad <span class="op">/=</span> <span class="bu">len</span>(val_loader)</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>        ax <span class="op">=</span> sns.heatmap(avg_grad.cpu().detach().numpy(), cmap <span class="op">=</span> <span class="st">'viridis'</span>, ax <span class="op">=</span> ax)</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>        ax.set_xlabel(<span class="st">'Classes'</span>)</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>        ax.set_ylabel(<span class="st">'Images in batch'</span>)</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>        ax.set_title(<span class="st">'With BN'</span> <span class="cf">if</span> bn <span class="cf">else</span> <span class="st">'Without BN'</span>)</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>    f.tight_layout()</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>fig6()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="main_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>And that’s about it.</p>
+</section>
+<section id="what-i-learned-practiced" class="level3">
+<h3 class="anchored" data-anchor-id="what-i-learned-practiced">What I learned / practiced</h3>
+<p>I gained a better understanding and intuition of why Batch Normalization (BN) works. More importantly, I got comfortable with PyTorch and debugging training, etc.</p>
+<p>Pytorch specific:</p>
 <ul>
-<li>How to do image augmentation</li>
+<li>Basics of image augmentation: basically use <a href="https://pytorch.org/vision/stable/transforms.html">transforms</a> and compose them.</li>
+<li>Learning rate schedulers: they exist, are really useful, and pytorch has a <a href="https://blog.paperspace.com/pytorch-hooks-gradient-clipping-debugging/">good assortment of them</a>.</li>
+<li><code>state_dict</code> preserves optimizer’s param groups and args (learning rates, etc.) but also momentum buffers.</li>
+<li><a href="https://blog.paperspace.com/pytorch-hooks-gradient-clipping-debugging/">hooks</a> as useful debugging and visualization tools.</li>
+<li><code>retain_grad</code> is required to get gradients of non-leaf nodes like the output logits.</li>
 </ul>
+<p>For the large training runs, I also experimented with <a href="https://jarvislabs.ai">jarvislabs.ai</a> as a provider. In-browser notebooks and VS Code, and direct SSH/FTP access were pretty nice. I could not work out funkiness with VS Code remote windows. Used</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nohup</span> jupyter nbconvert <span class="at">--execute</span> <span class="at">--to</span> notebook <span class="at">--inplace</span> <span class="at">--allow-errors</span> main.ipynb <span class="kw">&amp;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>to run the notebook, write results, and be able to close the Jupyter / VS Code tab.</p>
 </section>
 
 </main>
