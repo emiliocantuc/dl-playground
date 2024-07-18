@@ -427,7 +427,7 @@ lr=0.0001_bn took 211 epochs</code></pre>
 <p>At first, I thought because I was</p>
 <ul>
 <li>looking at the wrong layer, +- 1 (then found it made little difference)</li>
-<li>logging the gradient magnitudes incorrectly - why does the plot have negative values (then found the authors plot the raw gradient)</li>
+<li>logging the gradient magnitudes incorrectly - why does the plot have negative values? (then found the authors plot the raw gradient)</li>
 <li>misunderstanding the whole process</li>
 </ul>
 <p>As I understood it, we initialize the model (using Xavier’s initialization), do a forward and backward pass on a single batch, and log the gradients at roughly the middle layer:</p>
@@ -466,7 +466,7 @@ lr=0.0001_bn took 211 epochs</code></pre>
 </div>
 </div>
 </div>
-<p>The unnormalized while the unnormalized gradients are heavy-tailed, however, they are still much smaller than the normalized ones. I was stuck on this for a few days until I experimented with different initializations:</p>
+<p>Although the unnormalized gradients are heavy-tailed, they are still much smaller than the normalized ones. I was stuck on this issue for a few days until I experimented with different initializations:</p>
 <div id="cell-22" class="cell" data-execution_count="24">
 <details class="code-fold">
 <summary>Trying other inits</summary>
