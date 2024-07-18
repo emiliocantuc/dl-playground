@@ -424,7 +424,12 @@ lr=0.0001_bn took 211 epochs</code></pre>
 <p><img src="images/fig2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="500"></p>
 </figure>
 </div>
-<p>At first, I thought because I was - looking at the wrong layer, +- 1 (then found it made little difference) - logging the gradient magnitudes incorrectly - why does the plot have negative values (then found the authors plot the raw gradient) - misunderstanding the whole process</p>
+<p>At first, I thought because I was</p>
+<ul>
+<li>looking at the wrong layer, +- 1 (then found it made little difference)</li>
+<li>logging the gradient magnitudes incorrectly - why does the plot have negative values (then found the authors plot the raw gradient)</li>
+<li>misunderstanding the whole process</li>
+</ul>
 <p>As I understood it, we initialize the model (using Xavier’s initialization), do a forward and backward pass on a single batch, and log the gradients at roughly the middle layer:</p>
 <div id="cell-20" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>f, (ax1, ax2) <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize <span class="op">=</span> (<span class="dv">8</span>, <span class="dv">3</span>))</span>
